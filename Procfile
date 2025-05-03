@@ -1,0 +1,1 @@
+web: gunicorn ananda_cricket.wsgi --log-file -
