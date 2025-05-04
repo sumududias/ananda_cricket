@@ -274,9 +274,17 @@ class MatchPlayer(models.Model):
     fours = models.IntegerField(default=0)
     sixes = models.IntegerField(default=0)
     how_out = models.CharField(max_length=50, blank=True, null=True)
+    # New batting fields
+    is_century = models.BooleanField(default=False)
+    is_half_century = models.BooleanField(default=False)
+    
     overs_bowled = models.FloatField(default=0)
     runs_conceded = models.IntegerField(default=0)
     wickets_taken = models.IntegerField(default=0)
+    # New bowling fields
+    wide_balls = models.IntegerField(default=0)
+    no_balls = models.IntegerField(default=0)
+    
     catches = models.IntegerField(default=0)
     stumpings = models.IntegerField(default=0)
     runouts = models.IntegerField(default=0)
@@ -285,6 +293,19 @@ class MatchPlayer(models.Model):
 
     def __str__(self):
         return f"{self.player} in {self.match}"
+
+    def save(self, *args, **kwargs):
+        # Auto-calculate century and half-century
+        if self.runs_scored >= 100:
+            self.is_century = True
+            self.is_half_century = False
+        elif self.runs_scored >= 50:
+            self.is_half_century = True
+            self.is_century = False
+        else:
+            self.is_century = False
+            self.is_half_century = False
+        super().save(*args, **kwargs)
 
 class Substitution(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
