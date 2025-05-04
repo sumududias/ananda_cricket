@@ -20,9 +20,9 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-zoo9xbo6lk+al$zr-4o3u)ghv9
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = [
-    'anandacricket.pythonanywhere.com',  # PythonAnywhere domain
     'localhost',
     '127.0.0.1',
+    'anandacricket.pythonanywhere.com',
 ]
 
 # Application definition
