@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models import Sum, Count, F, ExpressionWrapper, FloatField, Q
+from django.db.models import Sum, Count, F, ExpressionWrapper, FloatField, Q, Max
 
 class Player(models.Model):
     ROLES = (
@@ -226,6 +226,71 @@ class Player(models.Model):
             runouts=Sum('runouts', default=0)
         )
         return stats
+
+    def get_format_stats(self, format_type):
+        """Get player statistics for a specific format (T20/ODI/TEST)"""
+        matches = MatchPlayer.objects.filter(
+            match__match_format=format_type,
+            player=self
+        )
+        
+        if not matches.exists():
+            return None
+            
+        total_runs = matches.aggregate(Sum('runs_scored'))['runs_scored__sum'] or 0
+        total_balls = matches.aggregate(Sum('balls_faced'))['balls_faced__sum'] or 0
+        total_wickets = matches.aggregate(Sum('wickets_taken'))['wickets_taken__sum'] or 0
+        total_matches = matches.values('match').distinct().count()
+        highest_score = matches.aggregate(Max('runs_scored'))['runs_scored__max'] or 0
+        centuries = matches.filter(is_century=True).count()
+        half_centuries = matches.filter(is_half_century=True).count()
+        
+        # Calculate bowling stats
+        total_overs = matches.aggregate(Sum('overs_bowled'))['overs_bowled__sum'] or 0
+        runs_conceded = matches.aggregate(Sum('runs_conceded'))['runs_conceded__sum'] or 0
+        wides = matches.aggregate(Sum('wide_balls'))['wide_balls__sum'] or 0
+        no_balls = matches.aggregate(Sum('no_balls'))['no_balls__sum'] or 0
+        
+        # Calculate averages
+        batting_average = total_runs / total_matches if total_matches > 0 else 0
+        strike_rate = (total_runs * 100) / total_balls if total_balls > 0 else 0
+        bowling_average = runs_conceded / total_wickets if total_wickets > 0 else 0
+        economy_rate = runs_conceded / total_overs if total_overs > 0 else 0
+        
+        return {
+            'format': format_type,
+            'matches': total_matches,
+            'batting': {
+                'runs': total_runs,
+                'balls': total_balls,
+                'average': round(batting_average, 2),
+                'strike_rate': round(strike_rate, 2),
+                'highest_score': highest_score,
+                'centuries': centuries,
+                'half_centuries': half_centuries,
+            },
+            'bowling': {
+                'wickets': total_wickets,
+                'overs': total_overs,
+                'runs_conceded': runs_conceded,
+                'average': round(bowling_average, 2),
+                'economy': round(economy_rate, 2),
+                'wides': wides,
+                'no_balls': no_balls,
+            }
+        }
+
+    @property
+    def test_stats(self):
+        return self.get_format_stats('TEST')
+        
+    @property
+    def odi_stats(self):
+        return self.get_format_stats('ODI')
+        
+    @property
+    def t20_stats(self):
+        return self.get_format_stats('T20')
 
 class Team(models.Model):
     name = models.CharField(max_length=100)

@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
+from django.utils.html import format_html
 from .models import Player, Match, MatchPlayer, Team, Tournament, Substitution, TeamStanding
 
 class MatchPlayerInlineForm(ModelForm):
@@ -16,7 +17,7 @@ class MatchPlayerInlineForm(ModelForm):
 class MatchPlayerInline(admin.TabularInline):
     model = MatchPlayer
     form = MatchPlayerInlineForm
-    extra = 0
+    extra = 1
     fields = (
         'player', 'innings', 'batting_order', 
         ('runs_scored', 'balls_faced', 'fours', 'sixes', 'how_out'),
@@ -41,6 +42,48 @@ class PlayerAdmin(admin.ModelAdmin):
     list_display = ('first_name', 'last_name', 'primary_role', 'batting_style', 'bowling_style')
     list_filter = ('primary_role', 'batting_style', 'is_active')
     search_fields = ('first_name', 'last_name')
+    
+    readonly_fields = ('format_statistics',)
+    
+    def format_statistics(self, obj):
+        stats_html = []
+        for format_type, stats in [
+            ('Test Match', obj.test_stats),
+            ('ODI', obj.odi_stats),
+            ('T20', obj.t20_stats)
+        ]:
+            if stats:
+                stats_html.append(f'<h3>{format_type} Statistics</h3>')
+                stats_html.append('<div style="margin-left: 20px">')
+                stats_html.append(f'<p>Matches: {stats["matches"]}</p>')
+                stats_html.append('<h4>Batting</h4>')
+                batting = stats['batting']
+                stats_html.append(f'<p>Runs: {batting["runs"]} | Average: {batting["average"]} | '
+                                f'Strike Rate: {batting["strike_rate"]} | Highest: {batting["highest_score"]}</p>')
+                stats_html.append(f'<p>100s: {batting["centuries"]} | 50s: {batting["half_centuries"]}</p>')
+                
+                stats_html.append('<h4>Bowling</h4>')
+                bowling = stats['bowling']
+                stats_html.append(f'<p>Wickets: {bowling["wickets"]} | Economy: {bowling["economy"]} | '
+                                f'Average: {bowling["average"]}</p>')
+                stats_html.append(f'<p>Wides: {bowling["wides"]} | No Balls: {bowling["no_balls"]}</p>')
+                stats_html.append('</div><br>')
+        
+        return format_html(''.join(stats_html)) if stats_html else "No statistics available"
+    
+    format_statistics.short_description = "Format Statistics"
+    
+    fieldsets = (
+        ('Personal Information', {
+            'fields': ('first_name', 'last_name', 'date_of_birth', 'photo')
+        }),
+        ('Playing Details', {
+            'fields': ('primary_role', 'batting_style', 'bowling_style', 'is_active')
+        }),
+        ('Statistics by Format', {
+            'fields': ('format_statistics',)
+        }),
+    )
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
@@ -52,17 +95,25 @@ class MatchAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Match Details', {
             'fields': (
-                'date', 'team', 'opponent', 'venue', 
-                'match_format', 'match_type', 'tournament'
+                ('date', 'match_format'),
+                ('team', 'opponent'),
+                ('venue', 'match_type'),
+                'tournament'
             )
         }),
         ('Toss & Result', {
-            'fields': ('toss_winner', 'toss_decision', 'result')
+            'fields': (('toss_winner', 'toss_decision'), 'result')
         }),
         ('Additional Info', {
             'fields': ('man_of_match', 'summary', 'scorecard_photo')
         }),
     )
+    
+    class Media:
+        css = {
+            'all': ('admin/css/forms.css',)
+        }
+        js = ('admin/js/jquery.init.js', 'admin/js/inlines.js')
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
