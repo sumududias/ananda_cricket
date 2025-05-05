@@ -247,12 +247,31 @@ class Tournament(models.Model):
         return f"{self.name} {self.season}"
 
 class Match(models.Model):
+    MATCH_FORMATS = [
+        ('T20', 'Twenty20'),
+        ('ODI', 'One Day'),
+        ('TEST', 'Test Match'),
+        ('OTHER', 'Other Format')
+    ]
+    
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     opponent = models.CharField(max_length=100)
     date = models.DateField()
     venue = models.CharField(max_length=100)
+    match_format = models.CharField(max_length=10, choices=MATCH_FORMATS, default='T20')
+    overs_per_innings = models.IntegerField(default=20, help_text="Number of overs per innings (leave blank for Test matches)")
+    is_test_match = models.BooleanField(default=False)
     match_type = models.CharField(max_length=20, choices=[('TOURNAMENT', 'Tournament'), ('FRIENDLY', 'Friendly')])
     tournament = models.ForeignKey(Tournament, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # First Innings
+    ananda_first_innings_score = models.CharField(max_length=50, blank=True, null=True)
+    opponent_first_innings_score = models.CharField(max_length=50, blank=True, null=True)
+    
+    # Second Innings (for test matches)
+    ananda_second_innings_score = models.CharField(max_length=50, blank=True, null=True)
+    opponent_second_innings_score = models.CharField(max_length=50, blank=True, null=True)
+    
     toss_winner = models.CharField(max_length=100)
     toss_decision = models.CharField(max_length=10, choices=[('BAT', 'Bat'), ('BOWL', 'Bowl')])
     result = models.CharField(max_length=10, choices=[('WON', 'Won'), ('LOST', 'Lost'), ('DRAW', 'Draw')])
@@ -270,14 +289,12 @@ class Match(models.Model):
     opponent_extras_no_balls = models.IntegerField(default=0, verbose_name="Opponent No Balls")
     opponent_extras_penalty = models.IntegerField(default=0, verbose_name="Opponent Penalty Runs")
     
-    ananda_score = models.CharField(max_length=50)
-    opponent_score = models.CharField(max_length=50)
     summary = models.TextField()
     man_of_match = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True)
     scorecard_photo = models.ImageField(upload_to='scorecards/', blank=True, null=True)
 
     def __str__(self):
-        return f"vs {self.opponent} on {self.date}"
+        return f"{self.get_match_format_display()} vs {self.opponent} on {self.date}"
     
     @property
     def ananda_total_extras(self):

@@ -4,6 +4,13 @@ from .models import Player, Match, MatchPlayer, Team, Tournament, Substitution, 
 class MatchPlayerInline(admin.TabularInline):
     model = MatchPlayer
     extra = 0
+    fields = (
+        'player', 'innings', 'batting_order', 
+        ('runs_scored', 'balls_faced', 'fours', 'sixes', 'how_out'),
+        ('overs_bowled', 'runs_conceded', 'wickets_taken', 'wide_balls', 'no_balls'),
+        ('catches', 'stumpings', 'runouts'),
+        'is_playing_xi'
+    )
 
 class SubstitutionInline(admin.TabularInline):
     model = Substitution
@@ -18,37 +25,31 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
-    list_display = ('date', 'opponent', 'venue', 'match_type', 'result', 'ananda_total_extras', 'opponent_total_extras')
-    list_filter = ('match_type', 'venue', 'result', 'tournament')
+    list_display = ('date', 'opponent', 'match_format', 'venue', 'result')
+    list_filter = ('match_format', 'match_type', 'venue', 'result', 'tournament')
     inlines = [MatchPlayerInline, SubstitutionInline]
     search_fields = ('opponent', 'venue')
     
     fieldsets = (
         ('Match Details', {
-            'fields': ('date', 'team', 'opponent', 'venue', 'match_type', 'tournament')
+            'fields': (
+                'date', 'team', 'opponent', 'venue', 
+                'match_format', 'overs_per_innings', 'is_test_match',
+                'match_type', 'tournament'
+            )
         }),
         ('Toss & Result', {
             'fields': ('toss_winner', 'toss_decision', 'result')
         }),
-        ('Ananda Extras', {
-            'fields': (
-                'ananda_extras_byes', 'ananda_extras_leg_byes',
-                'ananda_extras_wides', 'ananda_extras_no_balls',
-                'ananda_extras_penalty'
-            )
+        ('First Innings Scores', {
+            'fields': ('ananda_first_innings_score', 'opponent_first_innings_score')
         }),
-        ('Opponent Extras', {
-            'fields': (
-                'opponent_extras_byes', 'opponent_extras_leg_byes',
-                'opponent_extras_wides', 'opponent_extras_no_balls',
-                'opponent_extras_penalty'
-            )
-        }),
-        ('Final Scores', {
-            'fields': ('ananda_score', 'opponent_score', 'man_of_match')
+        ('Second Innings Scores', {
+            'classes': ('collapse',),
+            'fields': ('ananda_second_innings_score', 'opponent_second_innings_score')
         }),
         ('Additional Info', {
-            'fields': ('summary', 'scorecard_photo')
+            'fields': ('man_of_match', 'summary', 'scorecard_photo')
         }),
     )
 
@@ -60,9 +61,23 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(MatchPlayer)
 class MatchPlayerAdmin(admin.ModelAdmin):
-    list_display = ('match', 'player', 'runs_scored', 'wickets_taken', 'is_playing_xi')
-    list_filter = ('match', 'player', 'is_playing_xi')
+    list_display = ('match', 'player', 'innings', 'runs_scored', 'wickets_taken', 'wide_balls', 'no_balls')
+    list_filter = ('match', 'player', 'innings', 'is_playing_xi')
     search_fields = ('player__first_name', 'player__last_name')
+    fieldsets = (
+        ('Match Info', {
+            'fields': ('match', 'player', 'innings', 'is_playing_xi')
+        }),
+        ('Batting', {
+            'fields': ('batting_order', 'runs_scored', 'balls_faced', 'fours', 'sixes', 'how_out')
+        }),
+        ('Bowling', {
+            'fields': ('overs_bowled', 'runs_conceded', 'wickets_taken', 'wide_balls', 'no_balls')
+        }),
+        ('Fielding', {
+            'fields': ('catches', 'stumpings', 'runouts')
+        })
+    )
 
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
