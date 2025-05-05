@@ -25,8 +25,8 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
-    list_display = ('date', 'opponent', 'match_format', 'venue', 'result')
-    list_filter = ('match_format', 'match_type', 'venue', 'result', 'tournament')
+    list_display = ('date', 'opponent', 'venue', 'result')
+    list_filter = ('match_type', 'venue', 'result', 'tournament')
     inlines = [MatchPlayerInline, SubstitutionInline]
     search_fields = ('opponent', 'venue')
     
@@ -34,19 +34,11 @@ class MatchAdmin(admin.ModelAdmin):
         ('Match Details', {
             'fields': (
                 'date', 'team', 'opponent', 'venue', 
-                'match_format', 'overs_per_innings', 'is_test_match',
                 'match_type', 'tournament'
             )
         }),
         ('Toss & Result', {
             'fields': ('toss_winner', 'toss_decision', 'result')
-        }),
-        ('First Innings Scores', {
-            'fields': ('ananda_first_innings_score', 'opponent_first_innings_score')
-        }),
-        ('Second Innings Scores', {
-            'classes': ('collapse',),
-            'fields': ('ananda_second_innings_score', 'opponent_second_innings_score')
         }),
         ('Additional Info', {
             'fields': ('man_of_match', 'summary', 'scorecard_photo')
@@ -61,7 +53,7 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(MatchPlayer)
 class MatchPlayerAdmin(admin.ModelAdmin):
-    list_display = ('match', 'player', 'innings', 'runs_scored', 'wickets_taken', 'wide_balls', 'no_balls')
+    list_display = ('match', 'player', 'innings', 'runs_scored', 'wickets_taken')
     list_filter = ('match', 'player', 'innings', 'is_playing_xi')
     search_fields = ('player__first_name', 'player__last_name')
     fieldsets = (

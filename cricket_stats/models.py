@@ -309,22 +309,26 @@ class Match(models.Model):
                 self.opponent_extras_penalty)
 
 class MatchPlayer(models.Model):
+    INNINGS_CHOICES = [
+        (1, 'First Innings'),
+        (2, 'Second Innings'),
+    ]
+    
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    innings = models.IntegerField(choices=INNINGS_CHOICES, default=1)
     batting_order = models.IntegerField(null=True, blank=True)
     runs_scored = models.IntegerField(default=0)
     balls_faced = models.IntegerField(default=0)
     fours = models.IntegerField(default=0)
     sixes = models.IntegerField(default=0)
     how_out = models.CharField(max_length=50, blank=True, null=True)
-    # New batting fields
     is_century = models.BooleanField(default=False)
     is_half_century = models.BooleanField(default=False)
     
     overs_bowled = models.FloatField(default=0)
     runs_conceded = models.IntegerField(default=0)
     wickets_taken = models.IntegerField(default=0)
-    # New bowling fields
     wide_balls = models.IntegerField(default=0)
     no_balls = models.IntegerField(default=0)
     
@@ -334,21 +338,12 @@ class MatchPlayer(models.Model):
     is_playing_xi = models.BooleanField(default=True)
     is_substitute = models.BooleanField(default=False)
 
-    def __str__(self):
-        return f"{self.player} in {self.match}"
+    class Meta:
+        unique_together = ['match', 'player', 'innings']
+        ordering = ['innings', 'batting_order']
 
-    def save(self, *args, **kwargs):
-        # Auto-calculate century and half-century
-        if self.runs_scored >= 100:
-            self.is_century = True
-            self.is_half_century = False
-        elif self.runs_scored >= 50:
-            self.is_half_century = True
-            self.is_century = False
-        else:
-            self.is_century = False
-            self.is_half_century = False
-        super().save(*args, **kwargs)
+    def __str__(self):
+        return f"{self.player} - {self.match} ({self.get_innings_display()})"
 
 class Substitution(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
