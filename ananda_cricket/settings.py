@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'whitenoise.runserver_nostatic',
     'cricket_stats',
+    'import_export',
 ]
 
 MIDDLEWARE = [
@@ -118,6 +119,14 @@ STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Ensure media directories exist
+PLAYER_IMAGES_DIR = 'players'
+DEFAULT_PLAYER_IMAGE = 'players/default.png'
+
+# File upload settings
+FILE_UPLOAD_PERMISSIONS = 0o644
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
