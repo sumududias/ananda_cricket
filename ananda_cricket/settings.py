@@ -23,6 +23,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'anandacricket.pythonanywhere.com',
+    '.pythonanywhere.com',  # Allow all subdomains of pythonanywhere.com
 ]
 
 # Application definition
@@ -38,7 +39,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'whitenoise.runserver_nostatic',
     'cricket_stats',
-    'import_export',
 ]
 
 MIDDLEWARE = [
