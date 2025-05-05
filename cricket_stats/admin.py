@@ -2,9 +2,26 @@ from django.contrib import admin
 from .models import Player, Match, Team, MatchPlayer, Substitution, Tournament, TeamStanding
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
+
+# Resources for import/export
+class PlayerResource(resources.ModelResource):
+    class Meta:
+        model = Player
+        fields = ('id', 'first_name', 'last_name', 'dob', 'primary_role', 'batting_style', 
+                 'bowling_style', 'player_class', 'year_joined', 'is_active')
+
+class MatchPlayerResource(resources.ModelResource):
+    class Meta:
+        model = MatchPlayer
+        fields = ('id', 'match', 'player', 'batting_order', 'runs_scored', 'balls_faced',
+                 'fours', 'sixes', 'how_out', 'overs_bowled', 'runs_conceded',
+                 'wickets_taken', 'wide_balls', 'no_balls', 'catches', 'stumpings', 'runouts')
 
 @admin.register(Player)
-class PlayerAdmin(admin.ModelAdmin):
+class PlayerAdmin(ImportExportModelAdmin):
+    resource_class = PlayerResource
     list_display = ('first_name', 'last_name', 'primary_role', 'batting_stats_display', 'bowling_stats_display', 'fielding_stats_display')
     list_display_links = ('first_name', 'last_name')
     search_fields = ('first_name', 'last_name')
@@ -162,21 +179,27 @@ class PlayerAdmin(admin.ModelAdmin):
 
 class MatchPlayerInline(admin.TabularInline):
     model = MatchPlayer
-    extra = 11  # Show 11 empty forms for a cricket team
+    extra = 0  # Changed from 11 to 0 to prevent automatic blank rows
     fields = ('player', 'batting_order', 'runs_scored', 'balls_faced', 'fours', 'sixes', 
-             'how_out', 'overs_bowled', 'runs_conceded', 'wickets_taken', 'catches', 
-             'stumpings', 'runouts', 'is_playing_xi', 'is_substitute')
+             'how_out', 'overs_bowled', 'runs_conceded', 'wickets_taken', 'wide_balls', 'no_balls',
+             'catches', 'stumpings', 'runouts', 'is_playing_xi', 'is_substitute')
+    
+    def get_extra(self, request, obj=None, **kwargs):
+        """Only show empty rows when creating a new match"""
+        if obj is None:
+            return 11  # New match - show 11 rows
+        return 0  # Existing match - no extra rows
 
 class SubstitutionInline(admin.TabularInline):
     model = Substitution
-    extra = 1
+    extra = 0
 
 @admin.register(Match)
-class MatchAdmin(admin.ModelAdmin):
+class MatchAdmin(ImportExportModelAdmin):
     list_display = ('date', 'opponent', 'result')
     list_filter = ('match_type', 'result')
     search_fields = ('opponent', 'tournament__name')
-    inlines = [MatchPlayerInline, SubstitutionInline]  # Add player details inline
+    inlines = [MatchPlayerInline, SubstitutionInline]
 
     fieldsets = (
         ('Match Details', {
@@ -193,11 +216,6 @@ class MatchAdmin(admin.ModelAdmin):
         }),
     )
 
-@admin.register(Team)
-class TeamAdmin(admin.ModelAdmin):
-    list_display = ('name', 'season', 'coach')
-    search_fields = ('name', 'coach')
-
 def scorecard_preview(self, obj):
     if obj.scorecard_photo:
         return mark_safe(f'<img src="{obj.scorecard_photo.url}" width="300" />')
@@ -206,21 +224,28 @@ def scorecard_preview(self, obj):
 scorecard_preview.short_description = 'Scorecard Preview'
 
 @admin.register(MatchPlayer)
-class MatchPlayerAdmin(admin.ModelAdmin):
-    list_display = ('match', 'player', 'runs_scored', 'wickets_taken')
-    list_filter = ('match', 'player')
+class MatchPlayerAdmin(ImportExportModelAdmin):
+    resource_class = MatchPlayerResource
+    list_display = ('match', 'player', 'runs_scored', 'wickets_taken', 'wide_balls', 'no_balls')
+    list_filter = ('match', 'player', 'is_century', 'is_half_century')
+    search_fields = ('player__first_name', 'player__last_name', 'match__opponent')
+
+@admin.register(Team)
+class TeamAdmin(ImportExportModelAdmin):
+    list_display = ('name', 'season', 'coach')
+    search_fields = ('name', 'coach')
+
+@admin.register(Tournament)
+class TournamentAdmin(ImportExportModelAdmin):
+    list_display = ('name', 'season', 'start_date', 'end_date')
+    search_fields = ('name', 'organizer')
+
+@admin.register(TeamStanding)
+class TeamStandingAdmin(ImportExportModelAdmin):
+    list_display = ('tournament', 'team', 'matches_played', 'points', 'position')
+    list_filter = ('tournament', 'team')
 
 @admin.register(Substitution)
 class SubstitutionAdmin(admin.ModelAdmin):
     list_display = ('match', 'player_out', 'player_in', 'reason')
     list_filter = ('match', 'reason')
-
-@admin.register(Tournament)
-class TournamentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'season', 'start_date', 'end_date')
-    search_fields = ('name', 'organizer')
-
-@admin.register(TeamStanding)
-class TeamStandingAdmin(admin.ModelAdmin):
-    list_display = ('tournament', 'team', 'matches_played', 'points', 'position')
-    list_filter = ('tournament', 'team')
