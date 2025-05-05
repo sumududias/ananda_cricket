@@ -15,7 +15,8 @@ def redirect_to_admin(request):
 urlpatterns = [
     path('', redirect_to_admin, name='index'),  # Redirect root to admin
     path('admin/', admin.site.urls),
-    path('api/', include('cricket_stats.urls')),  # Changed from cricket_stats.api.urls
+    path('cricket_stats/', include('cricket_stats.urls')),  # Web views
+    path('api/', include('cricket_stats.urls')),  # API views
     path('api/auth/', include('rest_framework.urls')),  # For browsable API login
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
