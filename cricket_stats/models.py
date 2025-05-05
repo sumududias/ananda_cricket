@@ -256,14 +256,40 @@ class Match(models.Model):
     toss_winner = models.CharField(max_length=100)
     toss_decision = models.CharField(max_length=10, choices=[('BAT', 'Bat'), ('BOWL', 'Bowl')])
     result = models.CharField(max_length=10, choices=[('WON', 'Won'), ('LOST', 'Lost'), ('DRAW', 'Draw')])
+    
+    # Extras
+    ananda_extras_byes = models.IntegerField(default=0, verbose_name="Byes")
+    ananda_extras_leg_byes = models.IntegerField(default=0, verbose_name="Leg Byes")
+    ananda_extras_wides = models.IntegerField(default=0, verbose_name="Wides")
+    ananda_extras_no_balls = models.IntegerField(default=0, verbose_name="No Balls")
+    ananda_extras_penalty = models.IntegerField(default=0, verbose_name="Penalty Runs")
+    
+    opponent_extras_byes = models.IntegerField(default=0, verbose_name="Opponent Byes")
+    opponent_extras_leg_byes = models.IntegerField(default=0, verbose_name="Opponent Leg Byes")
+    opponent_extras_wides = models.IntegerField(default=0, verbose_name="Opponent Wides")
+    opponent_extras_no_balls = models.IntegerField(default=0, verbose_name="Opponent No Balls")
+    opponent_extras_penalty = models.IntegerField(default=0, verbose_name="Opponent Penalty Runs")
+    
     ananda_score = models.CharField(max_length=50)
     opponent_score = models.CharField(max_length=50)
     summary = models.TextField()
     man_of_match = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True)
-    scorecard_photo = models.ImageField(upload_to='scorecards/', blank=True, null=True)  # For proof
+    scorecard_photo = models.ImageField(upload_to='scorecards/', blank=True, null=True)
 
     def __str__(self):
         return f"vs {self.opponent} on {self.date}"
+    
+    @property
+    def ananda_total_extras(self):
+        return (self.ananda_extras_byes + self.ananda_extras_leg_byes + 
+                self.ananda_extras_wides + self.ananda_extras_no_balls + 
+                self.ananda_extras_penalty)
+    
+    @property
+    def opponent_total_extras(self):
+        return (self.opponent_extras_byes + self.opponent_extras_leg_byes + 
+                self.opponent_extras_wides + self.opponent_extras_no_balls + 
+                self.opponent_extras_penalty)
 
 class MatchPlayer(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)

@@ -18,10 +18,39 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
-    list_display = ('date', 'opponent', 'venue', 'match_type', 'result')
+    list_display = ('date', 'opponent', 'venue', 'match_type', 'result', 'ananda_total_extras', 'opponent_total_extras')
     list_filter = ('match_type', 'venue', 'result', 'tournament')
     inlines = [MatchPlayerInline, SubstitutionInline]
     search_fields = ('opponent', 'venue')
+    
+    fieldsets = (
+        ('Match Details', {
+            'fields': ('date', 'team', 'opponent', 'venue', 'match_type', 'tournament')
+        }),
+        ('Toss & Result', {
+            'fields': ('toss_winner', 'toss_decision', 'result')
+        }),
+        ('Ananda Extras', {
+            'fields': (
+                'ananda_extras_byes', 'ananda_extras_leg_byes',
+                'ananda_extras_wides', 'ananda_extras_no_balls',
+                'ananda_extras_penalty'
+            )
+        }),
+        ('Opponent Extras', {
+            'fields': (
+                'opponent_extras_byes', 'opponent_extras_leg_byes',
+                'opponent_extras_wides', 'opponent_extras_no_balls',
+                'opponent_extras_penalty'
+            )
+        }),
+        ('Final Scores', {
+            'fields': ('ananda_score', 'opponent_score', 'man_of_match')
+        }),
+        ('Additional Info', {
+            'fields': ('summary', 'scorecard_photo')
+        }),
+    )
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
