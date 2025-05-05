@@ -23,9 +23,9 @@ router.register(r'team-standings', TeamStandingViewSet)
 
 # URL patterns
 urlpatterns = [
+    # API views
+    path('', include(router.urls)),
+    
     # Web views
     path('player/<int:player_id>/', player_profile, name='player_profile'),
-    
-    # API views
-    path('api/', include(router.urls)),
 ]

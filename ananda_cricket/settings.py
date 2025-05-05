@@ -75,26 +75,18 @@ WSGI_APPLICATION = 'ananda_cricket.wsgi.application'
 
 # Database
 # Use SQLite locally, MySQL on PythonAnywhere
-if os.getenv('PYTHONANYWHEREHOST'):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'anandacricket$default',
-            'USER': 'anandacricket',
-            'PASSWORD': os.getenv('DATABASE_PASSWORD', ''),
-            'HOST': 'anandacricket.mysql.pythonanywhere-services.com',
-            'OPTIONS': {
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'anandacricket$default',
+        'USER': 'anandacricket',
+        'PASSWORD': os.getenv('DATABASE_PASSWORD', ''),
+        'HOST': 'anandacricket.mysql.pythonanywhere-services.com',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
