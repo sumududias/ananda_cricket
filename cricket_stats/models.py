@@ -247,47 +247,28 @@ class Tournament(models.Model):
         return f"{self.name} {self.season}"
 
 class Match(models.Model):
-    MATCH_FORMATS = [
+    MATCH_TYPE_CHOICES = [
+        ('TOURNAMENT', 'Tournament'),
+        ('FRIENDLY', 'Friendly')
+    ]
+    
+    MATCH_FORMAT_CHOICES = [
         ('T20', 'Twenty20'),
-        ('ODI', 'One Day'),
-        ('TEST', 'Test Match'),
-        ('OTHER', 'Other Format')
+        ('ODI', 'One Day International'),
+        ('TEST', 'Test Match')
     ]
     
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     opponent = models.CharField(max_length=100)
     date = models.DateField()
     venue = models.CharField(max_length=100)
-    match_format = models.CharField(max_length=10, choices=MATCH_FORMATS, default='T20')
-    overs_per_innings = models.IntegerField(default=20, help_text="Number of overs per innings (leave blank for Test matches)")
-    is_test_match = models.BooleanField(default=False)
-    match_type = models.CharField(max_length=20, choices=[('TOURNAMENT', 'Tournament'), ('FRIENDLY', 'Friendly')])
+    match_type = models.CharField(max_length=20, choices=MATCH_TYPE_CHOICES)
+    match_format = models.CharField(max_length=4, choices=MATCH_FORMAT_CHOICES, default='T20')
     tournament = models.ForeignKey(Tournament, on_delete=models.SET_NULL, null=True, blank=True)
-    
-    # First Innings
-    ananda_first_innings_score = models.CharField(max_length=50, blank=True, null=True)
-    opponent_first_innings_score = models.CharField(max_length=50, blank=True, null=True)
-    
-    # Second Innings (for test matches)
-    ananda_second_innings_score = models.CharField(max_length=50, blank=True, null=True)
-    opponent_second_innings_score = models.CharField(max_length=50, blank=True, null=True)
     
     toss_winner = models.CharField(max_length=100)
     toss_decision = models.CharField(max_length=10, choices=[('BAT', 'Bat'), ('BOWL', 'Bowl')])
     result = models.CharField(max_length=10, choices=[('WON', 'Won'), ('LOST', 'Lost'), ('DRAW', 'Draw')])
-    
-    # Extras
-    ananda_extras_byes = models.IntegerField(default=0, verbose_name="Byes")
-    ananda_extras_leg_byes = models.IntegerField(default=0, verbose_name="Leg Byes")
-    ananda_extras_wides = models.IntegerField(default=0, verbose_name="Wides")
-    ananda_extras_no_balls = models.IntegerField(default=0, verbose_name="No Balls")
-    ananda_extras_penalty = models.IntegerField(default=0, verbose_name="Penalty Runs")
-    
-    opponent_extras_byes = models.IntegerField(default=0, verbose_name="Opponent Byes")
-    opponent_extras_leg_byes = models.IntegerField(default=0, verbose_name="Opponent Leg Byes")
-    opponent_extras_wides = models.IntegerField(default=0, verbose_name="Opponent Wides")
-    opponent_extras_no_balls = models.IntegerField(default=0, verbose_name="Opponent No Balls")
-    opponent_extras_penalty = models.IntegerField(default=0, verbose_name="Opponent Penalty Runs")
     
     summary = models.TextField()
     man_of_match = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True)
@@ -297,16 +278,8 @@ class Match(models.Model):
         return f"{self.get_match_format_display()} vs {self.opponent} on {self.date}"
     
     @property
-    def ananda_total_extras(self):
-        return (self.ananda_extras_byes + self.ananda_extras_leg_byes + 
-                self.ananda_extras_wides + self.ananda_extras_no_balls + 
-                self.ananda_extras_penalty)
-    
-    @property
-    def opponent_total_extras(self):
-        return (self.opponent_extras_byes + self.opponent_extras_leg_byes + 
-                self.opponent_extras_wides + self.opponent_extras_no_balls + 
-                self.opponent_extras_penalty)
+    def is_test_match(self):
+        return self.match_format == 'TEST'
 
 class MatchPlayer(models.Model):
     INNINGS_CHOICES = [
@@ -344,6 +317,25 @@ class MatchPlayer(models.Model):
 
     def __str__(self):
         return f"{self.player} - {self.match} ({self.get_innings_display()})"
+        
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.innings == 2 and not self.match.is_test_match:
+            raise ValidationError("Second innings is only allowed for Test matches")
+        
+    def save(self, *args, **kwargs):
+        self.clean()
+        # Auto-calculate century and half-century
+        if self.runs_scored >= 100:
+            self.is_century = True
+            self.is_half_century = False
+        elif self.runs_scored >= 50:
+            self.is_half_century = True
+            self.is_century = False
+        else:
+            self.is_century = False
+            self.is_half_century = False
+        super().save(*args, **kwargs)
 
 class Substitution(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)

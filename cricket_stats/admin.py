@@ -1,8 +1,21 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
+from django.forms import ModelForm
 from .models import Player, Match, MatchPlayer, Team, Tournament, Substitution, TeamStanding
+
+class MatchPlayerInlineForm(ModelForm):
+    def clean(self):
+        cleaned_data = super().clean()
+        innings = cleaned_data.get('innings')
+        match = cleaned_data.get('match')
+        
+        if innings == 2 and match and match.match_format != 'TEST':
+            raise ValidationError("Second innings is only allowed for Test matches")
+        return cleaned_data
 
 class MatchPlayerInline(admin.TabularInline):
     model = MatchPlayer
+    form = MatchPlayerInlineForm
     extra = 0
     fields = (
         'player', 'innings', 'batting_order', 
@@ -11,6 +24,12 @@ class MatchPlayerInline(admin.TabularInline):
         ('catches', 'stumpings', 'runouts'),
         'is_playing_xi'
     )
+
+    def get_fields(self, request, obj=None):
+        fields = list(super().get_fields(request, obj))
+        if obj and obj.match_format != 'TEST':
+            fields.remove('innings')
+        return fields
 
 class SubstitutionInline(admin.TabularInline):
     model = Substitution
@@ -25,8 +44,8 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
-    list_display = ('date', 'opponent', 'venue', 'result')
-    list_filter = ('match_type', 'venue', 'result', 'tournament')
+    list_display = ('date', 'opponent', 'match_format', 'match_type', 'venue', 'result')
+    list_filter = ('match_format', 'match_type', 'venue', 'result', 'tournament')
     inlines = [MatchPlayerInline, SubstitutionInline]
     search_fields = ('opponent', 'venue')
     
@@ -34,7 +53,7 @@ class MatchAdmin(admin.ModelAdmin):
         ('Match Details', {
             'fields': (
                 'date', 'team', 'opponent', 'venue', 
-                'match_type', 'tournament'
+                'match_format', 'match_type', 'tournament'
             )
         }),
         ('Toss & Result', {
@@ -53,23 +72,32 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(MatchPlayer)
 class MatchPlayerAdmin(admin.ModelAdmin):
+    form = MatchPlayerInlineForm
     list_display = ('match', 'player', 'innings', 'runs_scored', 'wickets_taken')
     list_filter = ('match', 'player', 'innings', 'is_playing_xi')
     search_fields = ('player__first_name', 'player__last_name')
-    fieldsets = (
-        ('Match Info', {
-            'fields': ('match', 'player', 'innings', 'is_playing_xi')
-        }),
-        ('Batting', {
-            'fields': ('batting_order', 'runs_scored', 'balls_faced', 'fours', 'sixes', 'how_out')
-        }),
-        ('Bowling', {
-            'fields': ('overs_bowled', 'runs_conceded', 'wickets_taken', 'wide_balls', 'no_balls')
-        }),
-        ('Fielding', {
-            'fields': ('catches', 'stumpings', 'runouts')
-        })
-    )
+    
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = [
+            ('Match Info', {
+                'fields': ['match', 'player', 'is_playing_xi']
+            }),
+            ('Batting', {
+                'fields': ('batting_order', 'runs_scored', 'balls_faced', 'fours', 'sixes', 'how_out')
+            }),
+            ('Bowling', {
+                'fields': ('overs_bowled', 'runs_conceded', 'wickets_taken', 'wide_balls', 'no_balls')
+            }),
+            ('Fielding', {
+                'fields': ('catches', 'stumpings', 'runouts')
+            })
+        ]
+        
+        # Only show innings field for test matches
+        if obj and obj.match.match_format == 'TEST':
+            fieldsets[0][1]['fields'].insert(2, 'innings')
+            
+        return fieldsets
 
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
