@@ -7,7 +7,8 @@ from .views import (
     TournamentViewSet,
     MatchPlayerViewSet,
     SubstitutionViewSet,
-    TeamStandingViewSet
+    TeamStandingViewSet,
+    player_profile
 )
 
 router = DefaultRouter()
@@ -21,4 +22,5 @@ router.register(r'team-standings', TeamStandingViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('player/<int:player_id>/', player_profile, name='player_profile'),
 ]
