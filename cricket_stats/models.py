@@ -339,7 +339,7 @@ class Match(models.Model):
     MATCH_FORMAT_CHOICES = [
         ('T20', 'Twenty20'),
         ('ODI', 'One Day (50 Overs)'),
-        ('TEST', 'Multi Day')
+        ('TEST', 'Test Match')
     ]
     
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
