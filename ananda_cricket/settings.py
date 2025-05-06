@@ -82,13 +82,20 @@ if DEBUG:
         }
     }
 else:
+    # Debug prints
+    print("Database settings:")
+    print(f"DB_NAME: {os.getenv('DB_NAME')}")
+    print(f"DB_USER: {os.getenv('DB_USER')}")
+    print(f"DB_PASSWORD length: {len(os.getenv('DB_PASSWORD', ''))}")
+    print(f"DB_HOST: {os.getenv('DB_HOST')}")
+    
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.getenv('DB_NAME', 'anandacricket$default'),
-            'USER': os.getenv('DB_USER', 'anandacricket'),
-            'PASSWORD': os.getenv('DB_PASSWORD', ''),
-            'HOST': os.getenv('DB_HOST', 'anandacricket.mysql.pythonanywhere-services.com'),
+            'NAME': os.getenv('DB_NAME'),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': os.getenv('DB_HOST'),
             'OPTIONS': {
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             },
