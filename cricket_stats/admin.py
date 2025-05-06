@@ -1,8 +1,14 @@
 from django.contrib import admin
+from django.contrib.admin import AdminSite
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.utils.html import format_html
 from .models import Player, Match, MatchPlayer, Team, Tournament, Substitution, TeamStanding
+
+# Customize admin site
+admin.site.site_header = "Ananda College Cricket Statistics Administration"
+admin.site.site_title = "Ananda Cricket Admin"
+admin.site.index_title = "Cricket Statistics Management"
 
 class MatchPlayerInlineForm(ModelForm):
     def clean(self):
