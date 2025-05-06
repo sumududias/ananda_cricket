@@ -417,21 +417,27 @@ class MatchPlayer(models.Model):
     balls_faced = models.IntegerField(default=0)
     fours = models.IntegerField(default=0)
     sixes = models.IntegerField(default=0)
-    how_out = models.CharField(max_length=50, blank=True, null=True)
-    is_century = models.BooleanField(default=False)
-    is_half_century = models.BooleanField(default=False)
+    how_out = models.CharField(max_length=50, null=True, blank=True)
     
+    # Bowling stats
     overs_bowled = models.FloatField(default=0)
     runs_conceded = models.IntegerField(default=0)
     wickets_taken = models.IntegerField(default=0)
     wide_balls = models.IntegerField(default=0)
     no_balls = models.IntegerField(default=0)
+    maidens = models.IntegerField(default=0)
     
+    # Fielding stats
     catches = models.IntegerField(default=0)
     stumpings = models.IntegerField(default=0)
     runouts = models.IntegerField(default=0)
+    
     is_playing_xi = models.BooleanField(default=True)
     is_substitute = models.BooleanField(default=False)
+    
+    # Auto-calculated fields
+    is_century = models.BooleanField(default=False)
+    is_half_century = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ['match', 'player', 'innings']
