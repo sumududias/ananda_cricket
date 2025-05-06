@@ -14,17 +14,12 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-zoo9xbo6lk+al$zr-4o3u)ghv9ze0%ve6dha&8cq3&2(+27j=+')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-zoo9xbo6lk+al$zr-4o3u)ghv9ze0%ve6dha&8cq3&2(+27j=+')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    'anandacricket.pythonanywhere.com',
-    '.pythonanywhere.com',  # Allow all subdomains of pythonanywhere.com
-]
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -84,18 +79,18 @@ if DEBUG:
 else:
     # Debug prints
     print("Database settings:")
-    print(f"DB_NAME: {os.getenv('DB_NAME')}")
-    print(f"DB_USER: {os.getenv('DB_USER')}")
-    print(f"DB_PASSWORD length: {len(os.getenv('DB_PASSWORD', ''))}")
-    print(f"DB_HOST: {os.getenv('DB_HOST')}")
+    print(f"DB_NAME: {os.getenv('DJANGO_DB_NAME')}")
+    print(f"DB_USER: {os.getenv('DJANGO_DB_USER')}")
+    print(f"DB_PASSWORD length: {len(os.getenv('DJANGO_DB_PASSWORD', ''))}")
+    print(f"DB_HOST: {os.getenv('DJANGO_DB_HOST')}")
     
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.getenv('DB_NAME'),
-            'USER': os.getenv('DB_USER'),
-            'PASSWORD': os.getenv('DB_PASSWORD'),
-            'HOST': os.getenv('DB_HOST'),
+            'NAME': os.getenv('DJANGO_DB_NAME'),
+            'USER': os.getenv('DJANGO_DB_USER'),
+            'PASSWORD': os.getenv('DJANGO_DB_PASSWORD'),
+            'HOST': os.getenv('DJANGO_DB_HOST'),
             'OPTIONS': {
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             },
