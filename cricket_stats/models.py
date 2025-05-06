@@ -338,8 +338,8 @@ class Match(models.Model):
     
     MATCH_FORMAT_CHOICES = [
         ('T20', 'Twenty20'),
-        ('ODI', 'One Day International'),
-        ('TEST', 'Test Match')
+        ('ODI', 'One Day (50 Overs)'),
+        ('TEST', 'Multi Day')
     ]
     
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
@@ -349,6 +349,12 @@ class Match(models.Model):
     match_type = models.CharField(max_length=20, choices=MATCH_TYPE_CHOICES)
     match_format = models.CharField(max_length=4, choices=MATCH_FORMAT_CHOICES, default='T20')
     tournament = models.ForeignKey(Tournament, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # Team extras
+    ananda_extras_byes = models.IntegerField(default=0, verbose_name="Byes")
+    ananda_extras_leg_byes = models.IntegerField(default=0, verbose_name="Leg Byes")
+    opponent_extras_byes = models.IntegerField(default=0, verbose_name="Opponent Byes")
+    opponent_extras_leg_byes = models.IntegerField(default=0, verbose_name="Opponent Leg Byes")
     
     toss_winner = models.CharField(max_length=100)
     toss_decision = models.CharField(max_length=10, choices=[('BAT', 'Bat'), ('BOWL', 'Bowl')])
@@ -364,6 +370,38 @@ class Match(models.Model):
     @property
     def is_test_match(self):
         return self.match_format == 'TEST'
+
+    @property
+    def ananda_total_extras(self):
+        """Calculate total extras for Ananda team"""
+        player_extras = self.matchplayer_set.filter(
+            innings=1
+        ).aggregate(
+            total_wides=Sum('wides', default=0),
+            total_no_balls=Sum('no_balls', default=0)
+        )
+        return (
+            self.ananda_extras_byes +
+            self.ananda_extras_leg_byes +
+            player_extras['total_wides'] +
+            player_extras['total_no_balls']
+        )
+
+    @property
+    def opponent_total_extras(self):
+        """Calculate total extras for opponent team"""
+        player_extras = self.matchplayer_set.filter(
+            innings=2
+        ).aggregate(
+            total_wides=Sum('wides', default=0),
+            total_no_balls=Sum('no_balls', default=0)
+        )
+        return (
+            self.opponent_extras_byes +
+            self.opponent_extras_leg_byes +
+            player_extras['total_wides'] +
+            player_extras['total_no_balls']
+        )
 
 class MatchPlayer(models.Model):
     INNINGS_CHOICES = [
