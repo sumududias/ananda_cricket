@@ -19,7 +19,7 @@ class MatchPlayerInlineForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        match = cleaned_data.get('match') or self.instance.match if self.instance else None
+        match = cleaned_data.get('match') or (self.instance.match if self.instance else None)
         
         if match and match.match_format in ['T20', 'ODI']:
             cleaned_data['innings'] = 1
@@ -45,11 +45,13 @@ class MatchPlayerInline(admin.TabularInline):
         'is_playing_xi'
     )
 
-    def get_fields(self, request, obj=None):
-        fields = list(self.fields)
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
         if obj and obj.match_format in ['T20', 'ODI']:
+            fields = list(self.fields)
             fields.remove('innings')
-        return fields
+            self.fields = tuple(fields)
+        return formset
 
 class SubstitutionInline(admin.TabularInline):
     model = Substitution
