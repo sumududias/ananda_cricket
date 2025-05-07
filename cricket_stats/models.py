@@ -45,20 +45,24 @@ class Player(models.Model):
         
         print(f"DEBUG - Batting - Raw stats from DB: {stats}")
         
-        total_runs = float(stats['total_runs'] or 0)
-        total_balls = float(stats['total_balls'] or 0)
-        innings = int(stats['innings'] or 0)
-        not_outs = int(stats['not_outs'] or 0)
-        outs = innings - not_outs
-
-        # Calculate batting average
-        batting_average = float(total_runs) / float(outs) if outs > 0 else float(total_runs) if total_runs > 0 else 0.0
-
-        # Calculate strike rate
-        strike_rate = (float(total_runs) * 100.0) / float(total_balls) if total_balls > 0 else 0.0
-
+        total_runs = stats['total_runs'] or 0
+        total_balls = stats['total_balls'] or 0
+        innings = stats['innings'] or 0
+        not_outs = stats['not_outs'] or 0
+        
+        # Calculate batting average and strike rate
+        if innings - not_outs > 0:
+            batting_average = total_runs / (innings - not_outs)
+        else:
+            batting_average = total_runs if total_runs > 0 else 0
+            
+        if total_balls > 0:
+            strike_rate = (total_runs * 100.0) / total_balls
+        else:
+            strike_rate = 0
+        
         result = {
-            'matches': self.total_matches,
+            'matches': matches.count(),
             'innings': innings,
             'not_outs': not_outs,
             'runs': int(total_runs),
@@ -82,35 +86,41 @@ class Player(models.Model):
             total_overs=Sum('overs_bowled'),
             total_runs=Sum('runs_conceded'),
             total_wickets=Sum('wickets_taken'),
+            total_maidens=Sum('maidens'),
+            total_wides=Sum('wide_balls'),
+            total_no_balls=Sum('no_balls'),
             innings=Count('id', filter=Q(overs_bowled__gt=0))
         )
         
         print(f"DEBUG - Bowling - Raw stats from DB: {stats}")
-
+        
         total_overs = stats['total_overs'] or 0
         total_runs = stats['total_runs'] or 0
         total_wickets = stats['total_wickets'] or 0
-        innings = stats['innings'] or 0
-
-        # Calculate bowling average
-        bowling_average = total_runs / total_wickets if total_wickets > 0 else 0
-
-        # Calculate economy rate
-        economy_rate = total_runs / total_overs if total_overs > 0 else 0
-
-        # Calculate strike rate
-        bowling_strike_rate = (total_overs * 6) / total_wickets if total_wickets > 0 else 0
-
+        
+        # Calculate bowling average and economy rate
+        if total_wickets > 0:
+            bowling_average = total_runs / total_wickets
+        else:
+            bowling_average = 0
+            
+        if total_overs > 0:
+            economy_rate = total_runs / total_overs
+        else:
+            economy_rate = 0
+            
         result = {
-            'matches': self.total_matches,
-            'innings': innings,
-            'overs': total_overs,
-            'runs': total_runs,
-            'wickets': total_wickets,
-            'average': round(bowling_average, 2),
-            'economy': round(economy_rate, 2),
-            'strike_rate': round(bowling_strike_rate, 2),
-            'best_bowling': self._get_best_bowling(),
+            'matches': matches.count(),
+            'innings': stats['innings'] or 0,
+            'overs': float(total_overs),
+            'runs': int(total_runs),
+            'wickets': int(total_wickets),
+            'maidens': int(stats['total_maidens'] or 0),
+            'wides': int(stats['total_wides'] or 0),
+            'no_balls': int(stats['total_no_balls'] or 0),
+            'average': float(round(bowling_average, 2)),
+            'economy': float(round(economy_rate, 2)),
+            'best_bowling': self._get_best_bowling()
         }
         
         print(f"DEBUG - Bowling - Final stats: {result}")

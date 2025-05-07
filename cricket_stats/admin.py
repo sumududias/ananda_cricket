@@ -24,17 +24,27 @@ class MatchPlayerInline(admin.TabularInline):
     model = MatchPlayer
     form = MatchPlayerInlineForm
     extra = 1
-    fields = (
-        'player', 'innings', 'batting_order', 
-        ('runs_scored', 'balls_faced', 'fours', 'sixes', 'how_out'),
-        ('overs_bowled', 'runs_conceded', 'wickets_taken', 'wide_balls', 'no_balls'),
-        ('catches', 'stumpings', 'runouts'),
-        'is_playing_xi'
-    )
+    
+    def get_fieldsets(self, request, obj=None):
+        if obj and obj.match_format in ['T20', 'ODI']:
+            return [(None, {'fields': (
+                'player', 'batting_order',
+                ('runs_scored', 'balls_faced', 'fours', 'sixes', 'how_out'),
+                ('overs_bowled', 'runs_conceded', 'wickets_taken', 'maidens', 'wide_balls', 'no_balls'),
+                ('catches', 'stumpings', 'runouts'),
+                'is_playing_xi'
+            )})]
+        return [(None, {'fields': (
+            'player', 'innings', 'batting_order',
+            ('runs_scored', 'balls_faced', 'fours', 'sixes', 'how_out'),
+            ('overs_bowled', 'runs_conceded', 'wickets_taken', 'maidens', 'wide_balls', 'no_balls'),
+            ('catches', 'stumpings', 'runouts'),
+            'is_playing_xi'
+        )})]
 
     def get_fields(self, request, obj=None):
         fields = list(super().get_fields(request, obj))
-        if obj and obj.match.match_format != 'TEST':
+        if obj and obj.match_format in ['T20', 'ODI']:
             fields.remove('innings')
         return fields
 
