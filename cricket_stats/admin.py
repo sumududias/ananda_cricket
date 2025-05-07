@@ -13,7 +13,7 @@ admin.site.index_title = "Cricket Statistics Management"
 class MatchPlayerInlineForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance and self.instance.match and self.instance.match.match_format in ['T20', 'ODI']:
+        if hasattr(self, 'instance') and self.instance.match and self.instance.match.match_format in ['T20', 'ODI']:
             self.fields['innings'].widget = forms.HiddenInput()
             self.fields['innings'].initial = 1
 
@@ -37,27 +37,23 @@ class MatchPlayerInline(admin.TabularInline):
     form = MatchPlayerInlineForm
     extra = 1
     
-    def get_fieldsets(self, request, obj=None):
+    fields = (
+        'player', 'innings', 'batting_order',
+        ('runs_scored', 'balls_faced', 'fours', 'sixes', 'how_out'),
+        ('overs_bowled', 'runs_conceded', 'wickets_taken', 'maidens', 'wide_balls', 'no_balls'),
+        ('catches', 'stumpings', 'runouts'),
+        'is_playing_xi'
+    )
+
+    def get_fields(self, request, obj=None):
+        fields = list(self.fields)
         if obj and obj.match_format in ['T20', 'ODI']:
-            return [(None, {'fields': (
-                'player', 'batting_order',
-                ('runs_scored', 'balls_faced', 'fours', 'sixes', 'how_out'),
-                ('overs_bowled', 'runs_conceded', 'wickets_taken', 'maidens', 'wide_balls', 'no_balls'),
-                ('catches', 'stumpings', 'runouts'),
-                'is_playing_xi'
-            )})]
-        return [(None, {'fields': (
-            'player', 'innings', 'batting_order',
-            ('runs_scored', 'balls_faced', 'fours', 'sixes', 'how_out'),
-            ('overs_bowled', 'runs_conceded', 'wickets_taken', 'maidens', 'wide_balls', 'no_balls'),
-            ('catches', 'stumpings', 'runouts'),
-            'is_playing_xi'
-        )})]
+            fields.remove('innings')
+        return fields
 
 class SubstitutionInline(admin.TabularInline):
     model = Substitution
-    extra = 0
-    fk_name = 'match'
+    extra = 1
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
@@ -65,12 +61,26 @@ class MatchAdmin(admin.ModelAdmin):
     list_filter = ('match_format', 'match_type', 'tournament')
     search_fields = ('team__name', 'opponent')
     inlines = [MatchPlayerInline, SubstitutionInline]
-
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        if obj and obj.match_format in ['T20', 'ODI']:
-            form.base_fields['innings'].widget = forms.HiddenInput()
-        return form
+    
+    fieldsets = [
+        (None, {
+            'fields': (
+                ('team', 'opponent'),
+                ('date', 'venue'),
+                ('match_format', 'match_type'),
+                'tournament',
+                'result',
+                'man_of_match',
+            )
+        }),
+        ('Extras', {
+            'fields': (
+                ('ananda_extras_byes', 'ananda_extras_leg_byes'),
+                ('opponent_extras_byes', 'opponent_extras_leg_byes'),
+            ),
+            'classes': ('collapse',)
+        })
+    ]
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):

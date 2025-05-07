@@ -352,28 +352,45 @@ class Match(models.Model):
     venue = models.CharField(max_length=100)
     match_type = models.CharField(max_length=20, choices=MATCH_TYPE_CHOICES)
     match_format = models.CharField(max_length=4, choices=MATCH_FORMAT_CHOICES, default='T20')
-    tournament = models.ForeignKey(Tournament, on_delete=models.SET_NULL, null=True, blank=True)
-    
-    # Team extras
-    ananda_extras_byes = models.IntegerField(default=0, verbose_name="Byes")
-    ananda_extras_leg_byes = models.IntegerField(default=0, verbose_name="Leg Byes")
-    opponent_extras_byes = models.IntegerField(default=0, verbose_name="Opponent Byes")
-    opponent_extras_leg_byes = models.IntegerField(default=0, verbose_name="Opponent Leg Byes")
-    
-    toss_winner = models.CharField(max_length=100)
-    toss_decision = models.CharField(max_length=10, choices=[('BAT', 'Bat'), ('BOWL', 'Bowl')])
-    result = models.CharField(max_length=10, choices=[('WON', 'Won'), ('LOST', 'Lost'), ('DRAW', 'Draw')])
-    
-    summary = models.TextField()
+    tournament = models.ForeignKey('Tournament', on_delete=models.SET_NULL, null=True, blank=True)
+    result = models.CharField(max_length=100, blank=True, null=True)
     man_of_match = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True)
-    scorecard_photo = models.ImageField(upload_to='scorecards/', blank=True, null=True)
+    
+    # Extras
+    ananda_extras_byes = models.IntegerField(default=0, verbose_name='Byes')
+    ananda_extras_leg_byes = models.IntegerField(default=0, verbose_name='Leg Byes')
+    opponent_extras_byes = models.IntegerField(default=0, verbose_name='Opponent Byes')
+    opponent_extras_leg_byes = models.IntegerField(default=0, verbose_name='Opponent Leg Byes')
 
     def __str__(self):
         return f"{self.get_match_format_display()} vs {self.opponent} on {self.date}"
-    
+
     @property
     def is_test_match(self):
         return self.match_format == 'TEST'
+
+    @property
+    def max_innings(self):
+        """Return the maximum number of innings allowed for this match format"""
+        return 2 if self.match_format == 'TEST' else 1
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        super().clean()
+        
+        # Validate that no players have innings > 1 for non-TEST matches
+        if self.match_format in ['T20', 'ODI']:
+            invalid_players = self.matchplayer_set.filter(innings__gt=1)
+            if invalid_players.exists():
+                raise ValidationError("Only TEST matches can have second innings")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+        
+        # If match format is changed from TEST to T20/ODI, update all players to innings 1
+        if self.match_format in ['T20', 'ODI']:
+            self.matchplayer_set.filter(innings__gt=1).update(innings=1)
 
     @property
     def ananda_total_extras(self):
@@ -381,7 +398,7 @@ class Match(models.Model):
         player_extras = self.matchplayer_set.filter(
             innings=1
         ).aggregate(
-            total_wides=Sum('wides', default=0),
+            total_wides=Sum('wide_balls', default=0),
             total_no_balls=Sum('no_balls', default=0)
         )
         return (
@@ -397,7 +414,7 @@ class Match(models.Model):
         player_extras = self.matchplayer_set.filter(
             innings=2
         ).aggregate(
-            total_wides=Sum('wides', default=0),
+            total_wides=Sum('wide_balls', default=0),
             total_no_balls=Sum('no_balls', default=0)
         )
         return (
