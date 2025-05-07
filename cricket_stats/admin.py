@@ -16,9 +16,16 @@ class MatchPlayerInlineForm(ModelForm):
         innings = cleaned_data.get('innings')
         match = cleaned_data.get('match')
         
-        if innings == 2 and match and match.match_format != 'TEST':
+        if match and match.match_format in ['T20', 'ODI']:
+            cleaned_data['innings'] = 1  # Force innings to 1 for T20/ODI
+        elif innings == 2 and match and match.match_format != 'TEST':
             raise ValidationError("Second innings is only allowed for Test matches")
+            
         return cleaned_data
+        
+    class Meta:
+        model = MatchPlayer
+        fields = '__all__'
 
 class MatchPlayerInline(admin.TabularInline):
     model = MatchPlayer
