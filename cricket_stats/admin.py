@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.admin import AdminSite
 from django.core.exceptions import ValidationError
-from django.forms import ModelForm
+from django import forms
 from django.utils.html import format_html
 from .models import Player, Match, MatchPlayer, Team, Tournament, Substitution, TeamStanding
 
@@ -10,19 +10,24 @@ admin.site.site_header = "Ananda College Cricket Statistics Administration"
 admin.site.site_title = "Ananda Cricket Admin"
 admin.site.index_title = "Cricket Statistics Management"
 
-class MatchPlayerInlineForm(ModelForm):
+class MatchPlayerInlineForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.match and self.instance.match.match_format in ['T20', 'ODI']:
+            self.fields['innings'].widget = forms.HiddenInput()
+            self.fields['innings'].initial = 1
+
     def clean(self):
         cleaned_data = super().clean()
-        innings = cleaned_data.get('innings')
-        match = cleaned_data.get('match')
+        match = cleaned_data.get('match') or self.instance.match if self.instance else None
         
         if match and match.match_format in ['T20', 'ODI']:
-            cleaned_data['innings'] = 1  # Force innings to 1 for T20/ODI
-        elif innings == 2 and match and match.match_format != 'TEST':
+            cleaned_data['innings'] = 1
+        elif cleaned_data.get('innings') == 2 and match and match.match_format != 'TEST':
             raise ValidationError("Second innings is only allowed for Test matches")
-            
-        return cleaned_data
         
+        return cleaned_data
+    
     class Meta:
         model = MatchPlayer
         fields = '__all__'
@@ -67,33 +72,16 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
-    list_display = ('date', 'opponent', 'venue')
-    list_filter = ('match_format', 'match_type', 'venue', 'result', 'tournament')
-    inlines = [MatchPlayerInline, SubstitutionInline]
-    search_fields = ('opponent', 'venue')
-    
-    fieldsets = (
-        ('Match Details', {
-            'fields': (
-                ('date', 'match_format'),
-                ('team', 'opponent'),
-                ('venue', 'match_type'),
-                'tournament'
-            )
-        }),
-        ('Toss & Result', {
-            'fields': (('toss_winner', 'toss_decision'), 'result')
-        }),
-        ('Additional Info', {
-            'fields': ('man_of_match', 'summary', 'scorecard_photo')
-        }),
-    )
-    
-    class Media:
-        css = {
-            'all': ('admin/css/forms.css',)
-        }
-        js = ('admin/js/jquery.init.js', 'admin/js/inlines.js')
+    list_display = ('team', 'opponent', 'date', 'match_format', 'result')
+    list_filter = ('match_format', 'team', 'date')
+    search_fields = ('team__name', 'opponent')
+    inlines = [MatchPlayerInline]
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if obj and obj.match_format in ['T20', 'ODI']:
+            form.base_fields['innings'].widget = forms.HiddenInput()
+        return form
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):

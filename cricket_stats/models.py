@@ -32,18 +32,17 @@ class Player(models.Model):
     @property
     def batting_stats(self):
         matches = self.matchplayer_set.filter(is_playing_xi=True)
-        print(f"DEBUG - Batting - Raw matches query: {matches.query}")
         
         stats = matches.aggregate(
-            total_runs=Sum('runs_scored'),
-            total_balls=Sum('balls_faced'),
-            total_fours=Sum('fours'),
-            total_sixes=Sum('sixes'),
-            innings=Count('id', filter=Q(batting_order__isnull=False)),
-            not_outs=Count('id', filter=Q(how_out='Not Out') | Q(how_out__isnull=True))
+            total_matches=models.Count('match', distinct=True),
+            total_runs=models.Sum('runs_scored'),
+            total_balls=models.Sum('balls_faced'),
+            total_fours=models.Sum('fours'),
+            total_sixes=models.Sum('sixes'),
+            innings=models.Count('id', filter=models.Q(batting_order__isnull=False)),
+            not_outs=models.Count('id', filter=models.Q(how_out='Not Out') | models.Q(how_out__isnull=True)),
+            highest_score=models.Max('runs_scored')
         )
-        
-        print(f"DEBUG - Batting - Raw stats from DB: {stats}")
         
         total_runs = stats['total_runs'] or 0
         total_balls = stats['total_balls'] or 0
@@ -61,38 +60,33 @@ class Player(models.Model):
         else:
             strike_rate = 0
         
-        result = {
-            'matches': matches.count(),
+        return {
+            'matches': stats['total_matches'] or 0,
             'innings': innings,
             'not_outs': not_outs,
-            'runs': int(total_runs),
-            'balls_faced': int(total_balls),
-            'fours': int(stats['total_fours'] or 0),
-            'sixes': int(stats['total_sixes'] or 0),
-            'average': float(round(batting_average, 2)),
-            'strike_rate': float(round(strike_rate, 2)),
-            'highest_score': int(matches.aggregate(highest=models.Max('runs_scored'))['highest'] or 0),
+            'runs': total_runs,
+            'balls_faced': total_balls,
+            'fours': stats['total_fours'] or 0,
+            'sixes': stats['total_sixes'] or 0,
+            'average': round(batting_average, 2),
+            'strike_rate': round(strike_rate, 2),
+            'highest_score': stats['highest_score'] or 0
         }
         
-        print(f"DEBUG - Batting - Final stats: {result}")
-        return result
-
     @property
     def bowling_stats(self):
         matches = self.matchplayer_set.filter(is_playing_xi=True)
-        print(f"DEBUG - Bowling - Raw matches query: {matches.query}")
         
         stats = matches.aggregate(
-            total_overs=Sum('overs_bowled'),
-            total_runs=Sum('runs_conceded'),
-            total_wickets=Sum('wickets_taken'),
-            total_maidens=Sum('maidens'),
-            total_wides=Sum('wide_balls'),
-            total_no_balls=Sum('no_balls'),
-            innings=Count('id', filter=Q(overs_bowled__gt=0))
+            total_matches=models.Count('match', distinct=True),
+            total_overs=models.Sum('overs_bowled'),
+            total_runs=models.Sum('runs_conceded'),
+            total_wickets=models.Sum('wickets_taken'),
+            total_maidens=models.Sum('maidens'),
+            total_wides=models.Sum('wide_balls'),
+            total_no_balls=models.Sum('no_balls'),
+            innings=models.Count('id', filter=models.Q(overs_bowled__gt=0))
         )
-        
-        print(f"DEBUG - Bowling - Raw stats from DB: {stats}")
         
         total_overs = stats['total_overs'] or 0
         total_runs = stats['total_runs'] or 0
@@ -109,22 +103,37 @@ class Player(models.Model):
         else:
             economy_rate = 0
             
-        result = {
-            'matches': matches.count(),
+        return {
+            'matches': stats['total_matches'] or 0,
             'innings': stats['innings'] or 0,
-            'overs': float(total_overs),
-            'runs': int(total_runs),
-            'wickets': int(total_wickets),
-            'maidens': int(stats['total_maidens'] or 0),
-            'wides': int(stats['total_wides'] or 0),
-            'no_balls': int(stats['total_no_balls'] or 0),
-            'average': float(round(bowling_average, 2)),
-            'economy': float(round(economy_rate, 2)),
+            'overs': total_overs,
+            'runs': total_runs,
+            'wickets': total_wickets,
+            'maidens': stats['total_maidens'] or 0,
+            'wides': stats['total_wides'] or 0,
+            'no_balls': stats['total_no_balls'] or 0,
+            'average': round(bowling_average, 2),
+            'economy': round(economy_rate, 2),
             'best_bowling': self._get_best_bowling()
         }
         
-        print(f"DEBUG - Bowling - Final stats: {result}")
-        return result
+    @property
+    def fielding_stats(self):
+        matches = self.matchplayer_set.filter(is_playing_xi=True)
+        
+        stats = matches.aggregate(
+            total_matches=models.Count('match', distinct=True),
+            total_catches=models.Sum('catches'),
+            total_stumpings=models.Sum('stumpings'),
+            total_runouts=models.Sum('runouts')
+        )
+        
+        return {
+            'matches': stats['total_matches'] or 0,
+            'catches': stats['total_catches'] or 0,
+            'stumpings': stats['total_stumpings'] or 0,
+            'runouts': stats['total_runouts'] or 0
+        }
 
     def _get_best_bowling(self):
         best = self.matchplayer_set.filter(
@@ -135,21 +144,6 @@ class Player(models.Model):
         if best:
             return f"{best.wickets_taken}/{best.runs_conceded}"
         return "0/0"
-
-    @property
-    def fielding_stats(self):
-        stats = self.matchplayer_set.filter(is_playing_xi=True).aggregate(
-            total_catches=Sum('catches'),
-            total_stumpings=Sum('stumpings'),
-            total_runouts=Sum('runouts')
-        )
-
-        return {
-            'matches': self.total_matches,
-            'catches': stats['total_catches'] or 0,
-            'stumpings': stats['total_stumpings'] or 0,
-            'runouts': stats['total_runouts'] or 0,
-        }
 
     def get_batting_stats(self):
         from .models import MatchPlayer
