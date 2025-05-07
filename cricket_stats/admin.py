@@ -54,28 +54,17 @@ class MatchPlayerInline(admin.TabularInline):
             'is_playing_xi'
         )})]
 
-    def get_fields(self, request, obj=None):
-        fields = list(super().get_fields(request, obj))
-        if obj and obj.match_format in ['T20', 'ODI']:
-            fields.remove('innings')
-        return fields
-
 class SubstitutionInline(admin.TabularInline):
     model = Substitution
     extra = 0
     fk_name = 'match'
 
-@admin.register(Player)
-class PlayerAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name')
-    search_fields = ('first_name', 'last_name')
-
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
-    list_display = ('team', 'opponent', 'date', 'match_format', 'result')
-    list_filter = ('match_format', 'team', 'date')
+    list_display = ('date', 'team', 'opponent', 'match_format', 'result')
+    list_filter = ('match_format', 'match_type', 'tournament')
     search_fields = ('team__name', 'opponent')
-    inlines = [MatchPlayerInline]
+    inlines = [MatchPlayerInline, SubstitutionInline]
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
@@ -83,9 +72,20 @@ class MatchAdmin(admin.ModelAdmin):
             form.base_fields['innings'].widget = forms.HiddenInput()
         return form
 
+@admin.register(Player)
+class PlayerAdmin(admin.ModelAdmin):
+    list_display = ('first_name', 'last_name', 'batting_style', 'bowling_style')
+    search_fields = ('first_name', 'last_name')
+    list_filter = ('batting_style',)
+
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ('name', 'season')
+    list_display = ('name', 'season', 'captain')
+    search_fields = ('name',)
+
+@admin.register(Tournament)
+class TournamentAdmin(admin.ModelAdmin):
+    list_display = ('name', 'season', 'start_date', 'end_date')
     search_fields = ('name',)
 
 @admin.register(MatchPlayer)
@@ -93,20 +93,16 @@ class MatchPlayerAdmin(admin.ModelAdmin):
     list_display = ('match', 'player', 'runs_scored', 'wickets_taken')
     list_filter = ('match', 'player')
     search_fields = ('player__first_name', 'player__last_name')
-
-@admin.register(Tournament)
-class TournamentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'season')
-    search_fields = ('name',)
+    form = MatchPlayerInlineForm
 
 @admin.register(Substitution)
 class SubstitutionAdmin(admin.ModelAdmin):
-    list_display = ('match', 'player_out', 'player_in', 'reason', 'substitution_time')
-    list_filter = ('reason', 'match')
+    list_display = ('match', 'player_out', 'player_in', 'substitution_time')
+    list_filter = ('match',)
     search_fields = ('player_out__first_name', 'player_out__last_name', 'player_in__first_name', 'player_in__last_name')
 
 @admin.register(TeamStanding)
 class TeamStandingAdmin(admin.ModelAdmin):
     list_display = ('tournament', 'team', 'matches_played', 'matches_won', 'matches_lost', 'points', 'position')
     list_filter = ('tournament', 'team')
-    search_fields = ('tournament__name', 'team__name')
+    search_fields = ('team__name', 'tournament__name')
