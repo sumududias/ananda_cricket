@@ -72,6 +72,11 @@ def player_profile(request, player_id):
     total_wide_balls = match_stats.aggregate(Sum('wide_balls'))['wide_balls__sum'] or 0
     total_no_balls = match_stats.aggregate(Sum('no_balls'))['no_balls__sum'] or 0
     
+    # Get format-specific stats
+    test_stats = player.get_stats_by_format('TEST')
+    odi_stats = player.get_stats_by_format('ODI')
+    t20_stats = player.get_stats_by_format('T20')
+    
     context = {
         'player': player,
         'batting_stats': batting_stats,
@@ -81,6 +86,9 @@ def player_profile(request, player_id):
         'half_centuries': half_centuries,
         'total_wide_balls': total_wide_balls,
         'total_no_balls': total_no_balls,
+        'test_stats': test_stats,
+        'odi_stats': odi_stats,
+        't20_stats': t20_stats,
     }
     
     return render(request, 'cricket_stats/player_profile.html', context)

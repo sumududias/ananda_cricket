@@ -19,7 +19,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-zoo9xbo6lk+al$zr-4o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,anandacricket.pythonanywhere.com').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -69,33 +69,18 @@ TEMPLATES = [
 WSGI_APPLICATION = 'ananda_cricket.wsgi.application'
 
 # Database
-if DEBUG:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('DJANGO_DB_NAME', 'ananda_cricket_local'),
+        'USER': os.getenv('DJANGO_DB_USER', 'ananda_local'),
+        'PASSWORD': os.getenv('DJANGO_DB_PASSWORD'),
+        'HOST': os.getenv('DJANGO_DB_HOST', 'localhost'),
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     }
-else:
-    # Debug prints
-    print("Database settings:")
-    print(f"DB_NAME: {os.getenv('DJANGO_DB_NAME')}")
-    print(f"DB_USER: {os.getenv('DJANGO_DB_USER')}")
-    print(f"DB_PASSWORD length: {len(os.getenv('DJANGO_DB_PASSWORD', ''))}")
-    print(f"DB_HOST: {os.getenv('DJANGO_DB_HOST')}")
-    
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.getenv('DJANGO_DB_NAME'),
-            'USER': os.getenv('DJANGO_DB_USER'),
-            'PASSWORD': os.getenv('DJANGO_DB_PASSWORD'),
-            'HOST': os.getenv('DJANGO_DB_HOST'),
-            'OPTIONS': {
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
-        }
-    }
+}
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -122,9 +107,9 @@ STATICFILES_DIRS = [
 # Change to simple storage for now
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
-# Media files
+# Media files (User uploaded files)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Ensure media directories exist
 PLAYER_IMAGES_DIR = 'players'

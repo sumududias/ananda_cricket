@@ -22,6 +22,14 @@ class Player(models.Model):
     photo = models.ImageField(upload_to='players/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
 
+    @property
+    def name(self):
+        return f"{self.first_name} {self.last_name}"
+
+    @property
+    def date_of_birth(self):
+        return self.dob
+
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
@@ -236,46 +244,71 @@ class Player(models.Model):
         try:
             matches = MatchPlayer.objects.filter(
                 match__match_format=format_type,
-                player=self
+                player=self,
+                is_playing_xi=True
             )
             
-            if not matches.exists():
-                return None
-                
-            total_runs = matches.aggregate(Sum('runs_scored'))['runs_scored__sum'] or 0
-            total_balls = matches.aggregate(Sum('balls_faced'))['balls_faced__sum'] or 0
-            total_wickets = matches.aggregate(Sum('wickets_taken'))['wickets_taken__sum'] or 0
-            total_matches = matches.values('match').distinct().count()
-            highest_score = matches.aggregate(Max('runs_scored'))['runs_scored__max'] or 0
-            centuries = matches.filter(is_century=True).count()
-            half_centuries = matches.filter(is_half_century=True).count()
+            # Calculate batting statistics
+            batting_stats = matches.aggregate(
+                total_matches=Count('match', distinct=True),
+                total_runs=Sum('runs_scored'),
+                total_balls=Sum('balls_faced'),
+                total_fours=Sum('fours'),
+                total_sixes=Sum('sixes'),
+                centuries=Count('id', filter=Q(is_century=True)),
+                half_centuries=Count('id', filter=Q(is_half_century=True)),
+                highest_score=Max('runs_scored'),
+                not_outs=Count('id', filter=Q(how_out='Not Out') | Q(how_out__isnull=True))
+            )
             
-            # Calculate bowling stats
-            total_overs = matches.aggregate(Sum('overs_bowled'))['overs_bowled__sum'] or 0
-            runs_conceded = matches.aggregate(Sum('runs_conceded'))['runs_conceded__sum'] or 0
-            wides = matches.aggregate(Sum('wide_balls'))['wide_balls__sum'] or 0
-            no_balls = matches.aggregate(Sum('no_balls'))['no_balls__sum'] or 0
+            # Calculate bowling statistics
+            bowling_stats = matches.aggregate(
+                total_overs=Sum('overs_bowled'),
+                total_runs_conceded=Sum('runs_conceded'),
+                total_wickets=Sum('wickets_taken'),
+                total_maidens=Sum('maidens'),
+                total_wides=Sum('wide_balls'),
+                total_no_balls=Sum('no_balls')
+            )
             
-            # Calculate averages safely
-            try:
-                batting_average = round(total_runs / total_matches, 2) if total_matches > 0 else 0
-            except:
-                batting_average = 0
+            # Calculate fielding statistics
+            fielding_stats = matches.aggregate(
+                total_catches=Sum('catches'),
+                total_stumpings=Sum('stumpings'),
+                total_runouts=Sum('runouts')
+            )
+            
+            # Get total matches and innings
+            total_matches = batting_stats['total_matches'] or 0
+            total_runs = batting_stats['total_runs'] or 0
+            total_balls = batting_stats['total_balls'] or 0
+            not_outs = batting_stats['not_outs'] or 0
+            
+            # Calculate batting averages and strike rates
+            if total_balls > 0:
+                strike_rate = (total_runs * 100.0) / total_balls
+            else:
+                strike_rate = 0.0
                 
-            try:
-                strike_rate = round((total_runs * 100) / total_balls, 2) if total_balls > 0 else 0
-            except:
-                strike_rate = 0
+            if total_matches - not_outs > 0:
+                batting_average = total_runs / (total_matches - not_outs)
+            else:
+                batting_average = total_runs if total_runs > 0 else 0.0
+            
+            # Calculate bowling averages and economy
+            total_wickets = bowling_stats['total_wickets'] or 0
+            total_runs_conceded = bowling_stats['total_runs_conceded'] or 0
+            total_overs = bowling_stats['total_overs'] or 0
+            
+            if total_wickets > 0:
+                bowling_average = total_runs_conceded / total_wickets
+            else:
+                bowling_average = 0.0
                 
-            try:
-                bowling_average = round(runs_conceded / total_wickets, 2) if total_wickets > 0 else 0
-            except:
-                bowling_average = 0
-                
-            try:
-                economy_rate = round(runs_conceded / total_overs, 2) if total_overs > 0 else 0
-            except:
-                economy_rate = 0
+            if total_overs > 0:
+                economy_rate = total_runs_conceded / float(total_overs)
+            else:
+                economy_rate = 0.0
             
             return {
                 'format': format_type,
@@ -283,20 +316,28 @@ class Player(models.Model):
                 'batting': {
                     'runs': total_runs,
                     'balls': total_balls,
-                    'average': batting_average,
-                    'strike_rate': strike_rate,
-                    'highest_score': highest_score,
-                    'centuries': centuries,
-                    'half_centuries': half_centuries,
+                    'average': round(batting_average, 2),
+                    'strike_rate': round(strike_rate, 2),
+                    'highest_score': batting_stats['highest_score'] or 0,
+                    'centuries': batting_stats['centuries'] or 0,
+                    'half_centuries': batting_stats['half_centuries'] or 0,
+                    'fours': batting_stats['total_fours'] or 0,
+                    'sixes': batting_stats['total_sixes'] or 0
                 },
                 'bowling': {
-                    'wickets': total_wickets,
                     'overs': total_overs,
-                    'runs_conceded': runs_conceded,
-                    'average': bowling_average,
-                    'economy': economy_rate,
-                    'wides': wides,
-                    'no_balls': no_balls,
+                    'runs_conceded': total_runs_conceded,
+                    'wickets': total_wickets,
+                    'average': round(bowling_average, 2),
+                    'economy': round(economy_rate, 2),
+                    'maidens': bowling_stats['total_maidens'] or 0,
+                    'wides': bowling_stats['total_wides'] or 0,
+                    'no_balls': bowling_stats['total_no_balls'] or 0
+                },
+                'fielding': {
+                    'catches': fielding_stats['total_catches'] or 0,
+                    'stumpings': fielding_stats['total_stumpings'] or 0,
+                    'runouts': fielding_stats['total_runouts'] or 0
                 }
             }
         except Exception as e:
@@ -314,6 +355,131 @@ class Player(models.Model):
     @property
     def t20_stats(self):
         return self.get_format_stats('T20')
+
+    def get_format_specific_stats(self, match_format):
+        matches = MatchPlayer.objects.filter(
+            player=self,
+            match__match_format=match_format
+        )
+        
+        total_runs = sum(m.runs_scored for m in matches)
+        total_wickets = sum(m.wickets_taken for m in matches)
+        matches_played = matches.count()
+        
+        if matches_played > 0:
+            batting_average = total_runs / matches_played
+            bowling_average = total_runs / total_wickets if total_wickets > 0 else 0
+        else:
+            batting_average = bowling_average = 0
+            
+        return {
+            'matches': matches_played,
+            'runs': total_runs,
+            'wickets': total_wickets,
+            'batting_avg': round(batting_average, 2),
+            'bowling_avg': round(bowling_average, 2),
+            'centuries': matches.filter(is_century=True).count(),
+            'fifties': matches.filter(is_half_century=True).count(),
+        }
+    
+    @property
+    def t20_format_stats(self):
+        return self.get_format_specific_stats('T20')
+    
+    @property
+    def odi_format_stats(self):
+        return self.get_format_specific_stats('ODI')
+    
+    @property
+    def test_format_stats(self):
+        return self.get_format_specific_stats('TEST')
+
+    def get_stats_by_format(self, match_format):
+        """Get player statistics for a specific match format"""
+        match_players = self.matchplayer_set.filter(match__match_format=match_format)
+        
+        if not match_players.exists():
+            return None
+
+        # Batting stats
+        total_runs = match_players.aggregate(Sum('runs_scored'))['runs_scored__sum'] or 0
+        total_innings = match_players.exclude(how_out='DNB').count()
+        not_outs = match_players.filter(how_out='NO').count()
+        balls_faced = match_players.aggregate(Sum('balls_faced'))['balls_faced__sum'] or 0
+        fours = match_players.aggregate(Sum('fours'))['fours__sum'] or 0
+        sixes = match_players.aggregate(Sum('sixes'))['sixes__sum'] or 0
+        highest_score = match_players.aggregate(Max('runs_scored'))['runs_scored__max'] or 0
+        
+        # Calculate batting average and strike rate
+        batting_average = total_runs / (total_innings - not_outs) if total_innings > not_outs else 0
+        strike_rate = (total_runs / balls_faced * 100) if balls_faced > 0 else 0
+        
+        # Count fifties and hundreds
+        fifties = match_players.filter(runs_scored__gte=50, runs_scored__lt=100).count()
+        hundreds = match_players.filter(runs_scored__gte=100).count()
+
+        # Bowling stats
+        total_wickets = match_players.aggregate(Sum('wickets_taken'))['wickets_taken__sum'] or 0
+        total_runs_conceded = match_players.aggregate(Sum('runs_conceded'))['runs_conceded__sum'] or 0
+        total_overs = match_players.aggregate(Sum('overs_bowled'))['overs_bowled__sum'] or 0
+        total_maidens = match_players.aggregate(Sum('maidens'))['maidens__sum'] or 0
+        
+        # Calculate bowling average, economy, and strike rate
+        bowling_average = total_runs_conceded / total_wickets if total_wickets > 0 else 0
+        economy_rate = total_runs_conceded / total_overs if total_overs > 0 else 0
+        bowling_strike_rate = (total_overs * 6) / total_wickets if total_wickets > 0 else 0
+        
+        # Count five wicket hauls
+        five_wickets = match_players.filter(wickets_taken__gte=5).count()
+
+        # Fielding stats
+        total_catches = match_players.aggregate(Sum('catches'))['catches__sum'] or 0
+        total_stumpings = match_players.aggregate(Sum('stumpings'))['stumpings__sum'] or 0
+        total_runouts = match_players.aggregate(Sum('runouts'))['runouts__sum'] or 0
+
+        return {
+            'batting': {
+                'matches': match_players.values('match').distinct().count(),
+                'innings': total_innings,
+                'not_outs': not_outs,
+                'runs': total_runs,
+                'balls': balls_faced,
+                'highest_score': highest_score,
+                'average': round(batting_average, 2),
+                'strike_rate': round(strike_rate, 2),
+                'fifties': fifties,
+                'hundreds': hundreds,
+                'fours': fours,
+                'sixes': sixes
+            },
+            'bowling': {
+                'overs': total_overs,
+                'maidens': total_maidens,
+                'runs': total_runs_conceded,
+                'wickets': total_wickets,
+                'average': round(bowling_average, 2),
+                'economy': round(economy_rate, 2),
+                'strike_rate': round(bowling_strike_rate, 2),
+                'five_wickets': five_wickets
+            },
+            'fielding': {
+                'catches': total_catches,
+                'stumpings': total_stumpings,
+                'runouts': total_runouts
+            }
+        }
+
+    def test_stats(self):
+        """Get player statistics for Test matches"""
+        return self.get_stats_by_format('TEST')
+
+    def odi_stats(self):
+        """Get player statistics for ODI matches"""
+        return self.get_stats_by_format('ODI')
+
+    def t20_stats(self):
+        """Get player statistics for T20 matches"""
+        return self.get_stats_by_format('T20')
 
 class Team(models.Model):
     name = models.CharField(max_length=100)
@@ -340,18 +506,26 @@ class Match(models.Model):
         ('FRIENDLY', 'Friendly')
     ]
     
-    MATCH_FORMAT_CHOICES = [
+    MATCH_FORMATS = [
+        ('TEST', 'Test Match'),
+        ('ODI', 'One Day 50 Over Match'),
         ('T20', 'Twenty20'),
-        ('ODI', 'One Day (50 Overs)'),
-        ('TEST', 'Test Match')
     ]
     
+    RESULT_CHOICES = [
+        ('WON', 'Won'),
+        ('LOST', 'Lost'),
+        ('DRAW', 'Draw'),
+        ('TIE', 'Tie'),
+        ('NR', 'No Result')
+    ]
+
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     opponent = models.CharField(max_length=100)
     date = models.DateField()
     venue = models.CharField(max_length=100)
     match_type = models.CharField(max_length=20, choices=MATCH_TYPE_CHOICES)
-    match_format = models.CharField(max_length=4, choices=MATCH_FORMAT_CHOICES, default='T20')
+    match_format = models.CharField(max_length=4, choices=MATCH_FORMATS, default='TEST')
     tournament = models.ForeignKey('Tournament', on_delete=models.SET_NULL, null=True, blank=True)
     result = models.CharField(max_length=100, blank=True, null=True)
     man_of_match = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True)
@@ -376,27 +550,31 @@ class Match(models.Model):
 
     def clean(self):
         from django.core.exceptions import ValidationError
+        from django.db import models
         super().clean()
         
-        # Validate that no players have innings > 1 for non-TEST matches
-        if self.match_format in ['T20', 'ODI']:
-            invalid_players = self.matchplayer_set.filter(innings__gt=1)
-            if invalid_players.exists():
-                raise ValidationError("Only TEST matches can have second innings")
+        # Only validate existing matches (ones with primary keys)
+        if self.pk:
+            if self.match_format in ['T20', 'ODI']:
+                # Only check players who actually batted (have runs or balls faced)
+                has_batted = models.Q(runs_scored__gt=0) | models.Q(balls_faced__gt=0)
+                invalid_players = self.matchplayer_set.filter(innings_number__gt=1).filter(has_batted)
+                if invalid_players.exists():
+                    raise ValidationError("Only TEST matches can have second innings")
 
     def save(self, *args, **kwargs):
-        self.clean()
+        # Save first to ensure we have a primary key
         super().save(*args, **kwargs)
         
-        # If match format is changed from TEST to T20/ODI, update all players to innings 1
+        # After saving, enforce innings rules based on match format
         if self.match_format in ['T20', 'ODI']:
-            self.matchplayer_set.filter(innings__gt=1).update(innings=1)
+            self.matchplayer_set.all().update(innings_number=1)
 
     @property
     def ananda_total_extras(self):
         """Calculate total extras for Ananda team"""
         player_extras = self.matchplayer_set.filter(
-            innings=1
+            innings_number=1
         ).aggregate(
             total_wides=Sum('wide_balls', default=0),
             total_no_balls=Sum('no_balls', default=0)
@@ -412,7 +590,7 @@ class Match(models.Model):
     def opponent_total_extras(self):
         """Calculate total extras for opponent team"""
         player_extras = self.matchplayer_set.filter(
-            innings=2
+            innings_number=2
         ).aggregate(
             total_wides=Sum('wide_balls', default=0),
             total_no_balls=Sum('no_balls', default=0)
@@ -425,82 +603,88 @@ class Match(models.Model):
         )
 
 class MatchPlayer(models.Model):
-    INNINGS_CHOICES = [
-        (1, 'First Innings'),
-        (2, 'Second Innings'),
-    ]
-    
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    innings = models.IntegerField(choices=INNINGS_CHOICES, default=1)
+    innings_number = models.IntegerField(default=1)
     batting_order = models.IntegerField(null=True, blank=True)
     runs_scored = models.IntegerField(default=0)
     balls_faced = models.IntegerField(default=0)
     fours = models.IntegerField(default=0)
     sixes = models.IntegerField(default=0)
-    how_out = models.CharField(max_length=50, null=True, blank=True)
-    
-    # Bowling stats
-    overs_bowled = models.FloatField(default=0)
+    how_out = models.CharField(max_length=100, blank=True, default='')
+    overs_bowled = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+    maidens = models.IntegerField(default=0)
     runs_conceded = models.IntegerField(default=0)
     wickets_taken = models.IntegerField(default=0)
     wide_balls = models.IntegerField(default=0)
     no_balls = models.IntegerField(default=0)
-    maidens = models.IntegerField(default=0)
-    
-    # Fielding stats
     catches = models.IntegerField(default=0)
     stumpings = models.IntegerField(default=0)
     runouts = models.IntegerField(default=0)
-    
     is_playing_xi = models.BooleanField(default=True)
     is_substitute = models.BooleanField(default=False)
-    
-    # Auto-calculated fields
-    is_century = models.BooleanField(default=False)
-    is_half_century = models.BooleanField(default=False)
+    selection_notes = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Add any special notes about player selection (e.g., U17 player promoted to first XI)"
+    )
+    approved_by = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True,
+        help_text="Name of person who approved this player's selection"
+    )
 
     class Meta:
-        unique_together = ['match', 'player', 'innings']
-        ordering = ['innings', 'batting_order']
+        unique_together = ('match', 'player', 'innings_number')
+        ordering = ['innings_number', 'batting_order']
 
-    def __str__(self):
-        return f"{self.player} - {self.match} ({self.get_innings_display()})"
-        
     def clean(self):
         from django.core.exceptions import ValidationError
-        if self.innings == 2 and not self.match.is_test_match:
-            raise ValidationError("Second innings is only allowed for Test matches")
         
+        if self.match and self.match.match_format in ['T20', 'ODI'] and self.innings_number != 1:
+            self.innings_number = 1
+        elif self.innings_number == 2 and self.match and self.match.match_format != 'TEST':
+            raise ValidationError({
+                'innings_number': 'Second innings is only allowed for Test matches'
+            })
+
     def save(self, *args, **kwargs):
-        self.clean()
-        # Auto-calculate century and half-century
-        if self.runs_scored >= 100:
-            self.is_century = True
-            self.is_half_century = False
-        elif self.runs_scored >= 50:
-            self.is_half_century = True
-            self.is_century = False
-        else:
-            self.is_century = False
-            self.is_half_century = False
+        if not self.innings_number:
+            self.innings_number = 1
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.player} - {self.match} - Innings {self.innings_number}"
 
 class Substitution(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
-    player_out = models.ForeignKey(Player, related_name='substituted_out', on_delete=models.CASCADE)
-    player_in = models.ForeignKey(Player, related_name='substituted_in', on_delete=models.CASCADE)
-    reason = models.CharField(max_length=100, choices=[
+    player_out = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='substituted_out')
+    player_in = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='substituted_in')
+    reason = models.CharField(max_length=20, choices=[
         ('INJURY', 'Injury'),
         ('TACTICAL', 'Tactical'),
         ('OTHER', 'Other')
     ])
-    comments = models.TextField(blank=True, null=True)
-    substitution_time = models.CharField(max_length=50)
-    approved_by = models.CharField(max_length=100)
+    substitution_time = models.CharField(max_length=100)
+    comments = models.TextField(blank=True, default='')
+    approved_by = models.CharField(max_length=100, blank=True, default='')
+
+    def clean(self):
+        # Skip validation if match is not saved yet
+        if not self.match_id:
+            return
+            
+        # Only validate if both match and player_out are set
+        if self.match and self.player_out:
+            if not MatchPlayer.objects.filter(match=self.match, player=self.player_out).exists():
+                raise ValidationError({'player_out': 'Selected player is not in the match squad'})
+        
+        if self.player_in == self.player_out:
+            raise ValidationError({'player_in': 'Substitute player cannot be the same as player being replaced'})
 
     def __str__(self):
-        return f"{self.player_out} → {self.player_in} in {self.match}"
+        return f"{self.player_out} replaced by {self.player_in} in {self.match}"
 
 class TeamStanding(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE)

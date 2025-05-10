@@ -1,0 +1,65 @@
+{% load admin_urls %}
+<div class="inline-related{% if inline_admin_form.original or inline_admin_form.show_url %} has_original{% endif %}{% if forloop.last and inline_admin_formset.has_add_permission %} empty-form{% endif %}"
+     id="{{ inline_admin_formset.formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
+
+  {% if inline_admin_form.form.non_field_errors %}
+    {{ inline_admin_form.form.non_field_errors }}
+  {% endif %}
+
+  <table class="match-player-form">
+    <tr>
+      {% for fieldset in inline_admin_form %}
+        {% for line in fieldset %}
+          {% for field in line %}
+            <td class="field-{{ field.field.name }}{% if field.field.name in 'substituted_player,substitution_reason' %} substitute-field{% endif %}">
+              {% if field.is_readonly %}
+                <p>{{ field.contents }}</p>
+              {% else %}
+                {{ field.field.errors.as_ul }}
+                {{ field.field }}
+              {% endif %}
+            </td>
+          {% endfor %}
+        {% endfor %}
+      {% endfor %}
+      {% if inline_admin_formset.formset.can_delete and inline_admin_form.original %}
+        <td class="delete">{{ inline_admin_form.deletion_field.field }}</td>
+      {% endif %}
+    </tr>
+  </table>
+</div>
+
+<style>
+.match-player-form {
+    width: 100%;
+    margin-bottom: 1em;
+}
+.match-player-form td {
+    padding: 5px;
+}
+.substitute-field {
+    display: none;
+}
+tr.is-substitute .substitute-field {
+    display: table-cell;
+}
+</style>
+
+<script>
+(function($) {
+    $(document).ready(function() {
+        // Show/hide substitute fields based on is_substitute checkbox
+        $('input[name$="-is_substitute"]').change(function() {
+            var row = $(this).closest('tr');
+            if (this.checked) {
+                row.addClass('is-substitute');
+            } else {
+                row.removeClass('is-substitute');
+            }
+        });
+        
+        // Trigger change event on page load for existing forms
+        $('input[name$="-is_substitute"]:checked').trigger('change');
+    });
+})(django.jQuery);
+</script>
