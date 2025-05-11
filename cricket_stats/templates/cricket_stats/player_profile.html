@@ -1,4 +1,3 @@
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -10,209 +9,98 @@
     <style>
         .player-photo {
             max-width: 200px;
+            border-radius: 8px;
             margin-bottom: 1rem;
-        }
-        .stats-table {
-            width: 100%;
-            margin-bottom: 1rem;
-        }
-        .stats-table th, .stats-table td {
-            padding: 0.3rem;
-            border: 1px solid #dee2e6;
         }
         .stats-table th {
             background-color: #f8f9fa;
-            text-align: center;
+        }
+        .stats-table td, .stats-table th {
+            padding: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .stats-section {
+            margin-bottom: 2rem;
         }
         .stats-header {
             background-color: #007bff;
             color: white;
-            padding: 0.5rem;
+            padding: 10px;
             margin-bottom: 1rem;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body class="bg-light">
-    <div class="container py-5">
-        <!-- Player Info Card -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 text-center">
-                        {% if player.photo %}
-                            <img src="{{ player.photo.url }}" alt="{{ player }}" class="img-fluid rounded mb-3" style="max-width: 200px;">
-                        {% else %}
-                            <img src="{% static 'cricket_stats/default_player.png' %}" alt="Default" class="img-fluid rounded mb-3" style="max-width: 200px;">
-                        {% endif %}
+    <div class="container py-4">
+        <div class="row">
+            <!-- Left Column - Photo and Info -->
+            <div class="col-md-3">
+                {% if player.photo %}
+                    <img src="{{ player.photo.url }}" alt="{{ player }}" class="player-photo">
+                {% else %}
+                    <img src="{% static 'cricket_stats/img/default_player.png' %}" alt="Default" class="player-photo">
+                {% endif %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h4>{{ player.first_name }} {{ player.last_name }}</h4>
+                        <p class="text-muted mb-2">{{ player.get_primary_role_display }}</p>
+                        <hr>
+                        <p class="mb-2"><strong>Batting:</strong> {{ player.get_batting_style_display }}</p>
+                        <p class="mb-2"><strong>Bowling:</strong> {{ player.bowling_style|default:"N/A" }}</p>
+                        <p class="mb-2"><strong>Class:</strong> {{ player.player_class }}</p>
+                        <p class="mb-2"><strong>Joined:</strong> {{ player.year_joined }}</p>
+                        <p class="mb-0"><strong>Status:</strong> {% if player.is_active %}Active{% else %}Inactive{% endif %}</p>
                     </div>
-                    <div class="col-md-9">
-                        <h2 class="card-title">{{ player.first_name }} {{ player.last_name }}</h2>
-                        <p class="text-muted">{{ player.get_primary_role_display }}</p>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><strong>Batting Style:</strong> {{ player.get_batting_style_display }}</p>
-                                <p><strong>Bowling Style:</strong> {{ player.bowling_style|default:"N/A" }}</p>
-                                <p><strong>Player Class:</strong> {{ player.player_class }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p><strong>Year Joined:</strong> {{ player.year_joined }}</p>
-                                <p><strong>Status:</strong> {% if player.is_active %}Active{% else %}Inactive{% endif %}</p>
-                            </div>
-                        </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Combined Statistics -->
+            <div class="col-md-9">
+                <div class="stats-section">
+                    <div class="stats-header">
+                        <h5 class="mb-0">Career Statistics</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered stats-table">
+                            <thead>
+                                <tr>
+                                    <th colspan="4">Batting</th>
+                                    <th colspan="4">Bowling</th>
+                                    <th colspan="3">Fielding</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Matches:</strong> {{ test_stats.batting.matches + odi_stats.batting.matches + t20_stats.batting.matches }}</td>
+                                    <td><strong>Runs:</strong> {{ test_stats.batting.runs + odi_stats.batting.runs + t20_stats.batting.runs }}</td>
+                                    <td><strong>Average:</strong> {{ ((test_stats.batting.runs + odi_stats.batting.runs + t20_stats.batting.runs) / (test_stats.batting.innings + odi_stats.batting.innings + t20_stats.batting.innings))|floatformat:2 }}</td>
+                                    <td><strong>Strike Rate:</strong> {{ ((test_stats.batting.runs + odi_stats.batting.runs + t20_stats.batting.runs) / (test_stats.batting.balls_faced + odi_stats.batting.balls_faced + t20_stats.batting.balls_faced)) * 100|floatformat:2 }}</td>
+                                    <td><strong>Wickets:</strong> {{ test_stats.bowling.wickets + odi_stats.bowling.wickets + t20_stats.bowling.wickets }}</td>
+                                    <td><strong>Average:</strong> {{ ((test_stats.bowling.runs + odi_stats.bowling.runs + t20_stats.bowling.runs) / (test_stats.bowling.wickets + odi_stats.bowling.wickets + t20_stats.bowling.wickets))|floatformat:2 }}</td>
+                                    <td><strong>Economy:</strong> {{ ((test_stats.bowling.runs + odi_stats.bowling.runs + t20_stats.bowling.runs) / (test_stats.bowling.overs + odi_stats.bowling.overs + t20_stats.bowling.overs))|floatformat:2 }}</td>
+                                    <td><strong>Best:</strong> {{ test_stats.bowling.best_bowling }} / {{ odi_stats.bowling.best_bowling }} / {{ t20_stats.bowling.best_bowling }}</td>
+                                    <td><strong>Catches:</strong> {{ test_stats.fielding.catches + odi_stats.fielding.catches + t20_stats.fielding.catches }}</td>
+                                    <td><strong>Stumpings:</strong> {{ test_stats.fielding.stumpings + odi_stats.fielding.stumpings + t20_stats.fielding.stumpings }}</td>
+                                    <td><strong>Run Outs:</strong> {{ test_stats.fielding.runouts + odi_stats.fielding.runouts + t20_stats.fielding.runouts }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Innings:</strong> {{ test_stats.batting.innings + odi_stats.batting.innings + t20_stats.batting.innings }}</td>
+                                    <td><strong>Highest:</strong> {{ test_stats.batting.highest_score }} / {{ odi_stats.batting.highest_score }} / {{ t20_stats.batting.highest_score }}</td>
+                                    <td><strong>Centuries:</strong> {{ test_stats.batting.hundreds + odi_stats.batting.hundreds + t20_stats.batting.hundreds }}</td>
+                                    <td><strong>Fifties:</strong> {{ test_stats.batting.fifties + odi_stats.batting.fifties + t20_stats.batting.fifties }}</td>
+                                    <td><strong>Overs:</strong> {{ test_stats.bowling.overs + odi_stats.bowling.overs + t20_stats.bowling.overs }}</td>
+                                    <td><strong>Maidens:</strong> {{ test_stats.bowling.maidens + odi_stats.bowling.maidens + t20_stats.bowling.maidens }}</td>
+                                    <td><strong>Wides:</strong> {{ test_stats.bowling.wides + odi_stats.bowling.wides + t20_stats.bowling.wides }}</td>
+                                    <td><strong>No Balls:</strong> {{ test_stats.bowling.no_balls + odi_stats.bowling.no_balls + t20_stats.bowling.no_balls }}</td>
+                                    <td colspan="3"></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Test Match Statistics -->
-        <div class="stats-header">
-            <h5 class="mb-0">Test Match Statistics</h5>
-        </div>
-        <table class="stats-table">
-            <tr>
-                <th colspan="8">Batting Statistics</th>
-                <th colspan="6">Bowling Statistics</th>
-                <th colspan="3">Fielding Statistics</th>
-            </tr>
-            <tr>
-                <td>M</td>
-                <td>Inn</td>
-                <td>NO</td>
-                <td>Runs</td>
-                <td>HS</td>
-                <td>Avg</td>
-                <td>SR</td>
-                <td>50s/100s</td>
-                <td>O</td>
-                <td>M</td>
-                <td>R</td>
-                <td>W</td>
-                <td>Avg</td>
-                <td>Econ</td>
-                <td>Catches</td>
-                <td>Stumpings</td>
-                <td>Run Outs</td>
-            </tr>
-            <tr>
-                <td>{{ test_stats.batting.matches }}</td>
-                <td>{{ test_stats.batting.innings }}</td>
-                <td>{{ test_stats.batting.not_outs }}</td>
-                <td>{{ test_stats.batting.runs }}</td>
-                <td>{{ test_stats.batting.highest_score }}</td>
-                <td>{{ test_stats.batting.average|floatformat:2 }}</td>
-                <td>{{ test_stats.batting.strike_rate|floatformat:2 }}</td>
-                <td>{{ test_stats.batting.fifties }}/{{ test_stats.batting.hundreds }}</td>
-                <td>{{ test_stats.bowling.overs }}</td>
-                <td>{{ test_stats.bowling.maidens }}</td>
-                <td>{{ test_stats.bowling.runs }}</td>
-                <td>{{ test_stats.bowling.wickets }}</td>
-                <td>{{ test_stats.bowling.average|floatformat:2 }}</td>
-                <td>{{ test_stats.bowling.economy|floatformat:2 }}</td>
-                <td>{{ test_stats.fielding.catches }}</td>
-                <td>{{ test_stats.fielding.stumpings }}</td>
-                <td>{{ test_stats.fielding.runouts }}</td>
-            </tr>
-        </table>
-
-        <!-- ODI Statistics -->
-        <div class="stats-header">
-            <h5 class="mb-0">One Day 50 Over Match Statistics</h5>
-        </div>
-        <table class="stats-table">
-            <tr>
-                <th colspan="8">Batting Statistics</th>
-                <th colspan="6">Bowling Statistics</th>
-                <th colspan="3">Fielding Statistics</th>
-            </tr>
-            <tr>
-                <td>M</td>
-                <td>Inn</td>
-                <td>NO</td>
-                <td>Runs</td>
-                <td>HS</td>
-                <td>Avg</td>
-                <td>SR</td>
-                <td>50s/100s</td>
-                <td>O</td>
-                <td>M</td>
-                <td>R</td>
-                <td>W</td>
-                <td>Avg</td>
-                <td>Econ</td>
-                <td>Catches</td>
-                <td>Stumpings</td>
-                <td>Run Outs</td>
-            </tr>
-            <tr>
-                <td>{{ odi_stats.batting.matches }}</td>
-                <td>{{ odi_stats.batting.innings }}</td>
-                <td>{{ odi_stats.batting.not_outs }}</td>
-                <td>{{ odi_stats.batting.runs }}</td>
-                <td>{{ odi_stats.batting.highest_score }}</td>
-                <td>{{ odi_stats.batting.average|floatformat:2 }}</td>
-                <td>{{ odi_stats.batting.strike_rate|floatformat:2 }}</td>
-                <td>{{ odi_stats.batting.fifties }}/{{ odi_stats.batting.hundreds }}</td>
-                <td>{{ odi_stats.bowling.overs }}</td>
-                <td>{{ odi_stats.bowling.maidens }}</td>
-                <td>{{ odi_stats.bowling.runs }}</td>
-                <td>{{ odi_stats.bowling.wickets }}</td>
-                <td>{{ odi_stats.bowling.average|floatformat:2 }}</td>
-                <td>{{ odi_stats.bowling.economy|floatformat:2 }}</td>
-                <td>{{ odi_stats.fielding.catches }}</td>
-                <td>{{ odi_stats.fielding.stumpings }}</td>
-                <td>{{ odi_stats.fielding.runouts }}</td>
-            </tr>
-        </table>
-
-        <!-- T20 Statistics -->
-        <div class="stats-header">
-            <h5 class="mb-0">T20 Statistics</h5>
-        </div>
-        <table class="stats-table">
-            <tr>
-                <th colspan="8">Batting Statistics</th>
-                <th colspan="6">Bowling Statistics</th>
-                <th colspan="3">Fielding Statistics</th>
-            </tr>
-            <tr>
-                <td>M</td>
-                <td>Inn</td>
-                <td>NO</td>
-                <td>Runs</td>
-                <td>HS</td>
-                <td>Avg</td>
-                <td>SR</td>
-                <td>50s/100s</td>
-                <td>O</td>
-                <td>M</td>
-                <td>R</td>
-                <td>W</td>
-                <td>Avg</td>
-                <td>Econ</td>
-                <td>Catches</td>
-                <td>Stumpings</td>
-                <td>Run Outs</td>
-            </tr>
-            <tr>
-                <td>{{ t20_stats.batting.matches }}</td>
-                <td>{{ t20_stats.batting.innings }}</td>
-                <td>{{ t20_stats.batting.not_outs }}</td>
-                <td>{{ t20_stats.batting.runs }}</td>
-                <td>{{ t20_stats.batting.highest_score }}</td>
-                <td>{{ t20_stats.batting.average|floatformat:2 }}</td>
-                <td>{{ t20_stats.batting.strike_rate|floatformat:2 }}</td>
-                <td>{{ t20_stats.batting.fifties }}/{{ t20_stats.batting.hundreds }}</td>
-                <td>{{ t20_stats.bowling.overs }}</td>
-                <td>{{ t20_stats.bowling.maidens }}</td>
-                <td>{{ t20_stats.bowling.runs }}</td>
-                <td>{{ t20_stats.bowling.wickets }}</td>
-                <td>{{ t20_stats.bowling.average|floatformat:2 }}</td>
-                <td>{{ t20_stats.bowling.economy|floatformat:2 }}</td>
-                <td>{{ t20_stats.fielding.catches }}</td>
-                <td>{{ t20_stats.fielding.stumpings }}</td>
-                <td>{{ t20_stats.fielding.runouts }}</td>
-            </tr>
-        </table>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
