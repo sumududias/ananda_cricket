@@ -150,182 +150,37 @@ class MatchAdmin(admin.ModelAdmin):
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ['name', 'display_photo', 'date_of_birth', 'primary_role']
-    search_fields = ['first_name', 'last_name']
+    list_display = ['name', 'display_photo', 'jersey_number', 'dob', 'primary_role']
+    search_fields = ['first_name', 'last_name', 'jersey_number']
     list_filter = ['primary_role']
-    fields = ['first_name', 'last_name', 'dob', 'photo', 'primary_role', 'batting_style', 'bowling_style', 'player_class', 'year_joined', 'is_active']
-    readonly_fields = ['display_photo_large', 'display_stats']
+    readonly_fields = ['display_photo_large']
 
     def get_fieldsets(self, request, obj=None):
-        if obj:  # Only show stats for existing players
-            return [
-                ('Personal Information', {
-                    'fields': ['first_name', 'last_name', 'dob', 'photo', 'display_photo_large', 'primary_role', 'batting_style', 'bowling_style', 'player_class', 'year_joined', 'is_active']
-                }),
-                ('Statistics', {
-                    'fields': ['display_stats'],
-                    'classes': ['wide']
-                })
-            ]
-        return [('Personal Information', {
-            'fields': ['first_name', 'last_name', 'dob', 'photo', 'primary_role', 'batting_style', 'bowling_style', 'player_class', 'year_joined', 'is_active']
-        })]
+        fieldsets = [
+            ('Personal Information', {
+                'fields': ('first_name', 'last_name', 'dob', 'jersey_number', 'photo', 'display_photo_large')
+            }),
+            ('Cricket Information', {
+                'fields': ('primary_role', 'batting_style', 'bowling_style', 'player_class', 'year_joined', 'is_active')
+            }),
+        ]
+        return fieldsets
 
     def display_photo(self, obj):
         if obj.photo:
-            return format_html('<img src="{}" width="50" height="50" style="border-radius: 50%;" />', obj.photo.url)
-        return "No photo"
+            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 50%;" />', obj.photo.url)
+        return format_html('<img src="/static/cricket_stats/default-player.png" width="50" height="50" style="object-fit: cover; border-radius: 50%;" />')
     display_photo.short_description = 'Photo'
 
     def display_photo_large(self, obj):
         if obj.photo:
-            return format_html('<img src="{}" width="200" height="200" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />', obj.photo.url)
-        return "No photo"
-    display_photo_large.short_description = 'Player Photo'
+            return format_html('<img src="{}" width="200" height="200" style="object-fit: cover; border-radius: 8px;" />', obj.photo.url)
+        return format_html('<img src="/static/cricket_stats/default-player.png" width="200" height="200" style="object-fit: cover; border-radius: 8px;" />')
+    display_photo_large.short_description = 'Preview'
 
-    def display_stats(self, obj):
-        if not obj:
-            return ''
-        
-        # Get statistics for all formats
-        test_stats = obj.test_stats()
-        odi_stats = obj.odi_stats()
-        t20_stats = obj.t20_stats()
-        
-        # Format the statistics HTML
-        html = '<div style="max-width: 800px;">'
-        
-        # Test Statistics
-        html += '<h3 style="color: #417690;">Test Match Statistics</h3>'
-        html += self._format_stats_table(test_stats)
-        
-        # ODI Statistics
-        html += '<h3 style="color: #417690;">ODI Statistics</h3>'
-        html += self._format_stats_table(odi_stats)
-        
-        # T20 Statistics
-        html += '<h3 style="color: #417690;">T20 Statistics</h3>'
-        html += self._format_stats_table(t20_stats)
-        
-        html += '</div>'
-        return format_html(html)
-    display_stats.short_description = 'Player Statistics'
-
-    def _format_stats_table(self, stats):
-        if not stats:
-            return '<p>No statistics available</p>'
-            
-        batting = stats.get('batting', {})
-        bowling = stats.get('bowling', {})
-        fielding = stats.get('fielding', {})
-        
-        html = '''
-        <div style="max-width: 800px;">
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                <tr style="background-color: #79aec8; color: white;">
-                    <th style="padding: 8px; text-align: left;" colspan="12">Batting Statistics</th>
-                </tr>
-                <tr style="background-color: #f5f5f5;">
-                    <th style="padding: 8px; border: 1px solid #ddd;">M</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Inn</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">NO</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Runs</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">HS</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Avg</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">SR</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">50s</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">100s</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">4s</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">6s</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">BF</th>
-                </tr>
-                <tr>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                </tr>
-            </table>
-
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                <tr style="background-color: #79aec8; color: white;">
-                    <th style="padding: 8px; text-align: left;" colspan="8">Bowling Statistics</th>
-                </tr>
-                <tr style="background-color: #f5f5f5;">
-                    <th style="padding: 8px; border: 1px solid #ddd;">O</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">M</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">R</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">W</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Avg</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Econ</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">SR</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">5W</th>
-                </tr>
-                <tr>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                </tr>
-            </table>
-
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                <tr style="background-color: #79aec8; color: white;">
-                    <th style="padding: 8px; text-align: left;" colspan="3">Fielding Statistics</th>
-                </tr>
-                <tr style="background-color: #f5f5f5;">
-                    <th style="padding: 8px; border: 1px solid #ddd;">Catches</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Stumpings</th>
-                    <th style="padding: 8px; border: 1px solid #ddd;">Run Outs</th>
-                </tr>
-                <tr>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd;">{}</td>
-                </tr>
-            </table>
-        </div>
-        '''.format(
-            # Batting stats
-            batting.get('matches', 0),
-            batting.get('innings', 0),
-            batting.get('not_outs', 0),
-            batting.get('runs', 0),
-            batting.get('highest_score', 0),
-            round(batting.get('average', 0), 2),
-            round(batting.get('strike_rate', 0), 2),
-            batting.get('fifties', 0),
-            batting.get('hundreds', 0),
-            batting.get('fours', 0),
-            batting.get('sixes', 0),
-            batting.get('balls', 0),
-            # Bowling stats
-            bowling.get('overs', 0),
-            bowling.get('maidens', 0),
-            bowling.get('runs', 0),
-            bowling.get('wickets', 0),
-            round(bowling.get('average', 0), 2),
-            round(bowling.get('economy', 0), 2),
-            round(bowling.get('strike_rate', 0), 2),
-            bowling.get('five_wickets', 0),
-            # Fielding stats
-            fielding.get('catches', 0),
-            fielding.get('stumpings', 0),
-            fielding.get('runouts', 0)
-        )
-        return html
+    def name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+    name.admin_order_field = 'first_name'
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):

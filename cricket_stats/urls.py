@@ -8,8 +8,11 @@ from .views import (
     MatchPlayerViewSet,
     SubstitutionViewSet,
     TeamStandingViewSet,
-    player_profile
+    player_profile,
+    player_list
 )
+
+app_name = 'cricket_stats'
 
 # API routes
 router = DefaultRouter()
@@ -21,11 +24,16 @@ router.register(r'match-players', MatchPlayerViewSet)
 router.register(r'substitutions', SubstitutionViewSet)
 router.register(r'team-standings', TeamStandingViewSet)
 
-# URL patterns
-urlpatterns = [
-    # API views
-    path('', include(router.urls)),
-    
-    # Web views
-    path('player/<int:player_id>/', player_profile, name='player_profile'),
+# Web view patterns - removed 'web/' prefix
+web_urlpatterns = [
+    path('players/', player_list, name='player_list'),
+    path('players/<int:player_id>/', player_profile, name='player_profile'),
 ]
+
+# API URL patterns - moved under /cricket_stats/api/
+api_urlpatterns = [
+    path('api/', include((router.urls, 'api'))),  # Add namespace to avoid conflicts
+]
+
+# Combined patterns
+urlpatterns = web_urlpatterns + api_urlpatterns

@@ -1,0 +1,38 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block content %}
+    {# Default admin content first #}
+    {{ block.super }}
+
+    {# Right corner content #}
+    <div style="position: absolute; top: 116px; right: 212px; width: 270px;">
+        <img src="{% static 'cricket_stats/img/ananda-logo.png' %}" alt="Ananda School Logo" style="width: 100%; height: auto; margin-bottom: 20px;" onerror="this.style.display='none'">
+        
+        <div style="background: var(--darkened-bg); padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+            <h3 style="margin-top: 0; color: var(--body-fg);">Search Players</h3>
+            <form method="GET" action="{% url 'cricket_stats:player_list' %}">
+                <input type="text" name="q" placeholder="Search by name..." value="{{ request.GET.q }}" 
+                       style="width: 92%; padding: 8px; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--body-bg); color: var(--body-fg);">
+                <select name="age_group" 
+                        style="width: 100%; margin-bottom: 10px; padding: 5px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--body-bg); color: var(--body-fg);">
+                    <option value="">All Age Groups</option>
+                    <option value="U13">Under 13</option>
+                    <option value="U15">Under 15</option>
+                    <option value="U17">Under 17</option>
+                    <option value="U19">Under 19</option>
+                </select>
+                <button type="submit" 
+                        style="width: 100%; background: var(--button-bg); color: var(--button-fg); border: none; padding: 8px; border-radius: 4px; cursor: pointer;">
+                    Search
+                </button>
+            </form>
+        </div>
+
+        <a href="{% url 'cricket_stats:player_list' %}" class="button" 
+           style="width: 96%; text-align: center; display: block; margin-bottom: 20px;">
+            <i class="fas fa-users"></i> View All Players
+        </a>
+    </div>
+{% endblock %}

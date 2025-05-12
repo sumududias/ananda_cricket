@@ -14,12 +14,13 @@ class Player(models.Model):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     dob = models.DateField()
+    photo = models.ImageField(upload_to='player_photos/', null=True, blank=True)
+    jersey_number = models.IntegerField(null=True, blank=True, help_text="Player's jersey number", db_column='player_jersey_number')
     batting_style = models.CharField(max_length=20, choices=[('R', 'Right-handed'), ('L', 'Left-handed')])
     bowling_style = models.CharField(max_length=50, blank=True, null=True)
     primary_role = models.CharField(max_length=4, choices=ROLES)
     player_class = models.CharField(max_length=20)
     year_joined = models.IntegerField()
-    photo = models.ImageField(upload_to='players/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
 
     @property
@@ -30,8 +31,32 @@ class Player(models.Model):
     def date_of_birth(self):
         return self.dob
 
-    def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+    @property
+    def age_group(self):
+        from datetime import date
+        today = date.today()
+        age = today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
+        
+        if age <= 13:
+            return 'U13'
+        elif age <= 15:
+            return 'U15'
+        elif age <= 17:
+            return 'U17'
+        elif age <= 19:
+            return 'U19'
+        else:
+            return None
+
+    @property
+    def get_age_group_display(self):
+        age_groups = {
+            'U13': 'Under 13',
+            'U15': 'Under 15',
+            'U17': 'Under 17',
+            'U19': 'Under 19'
+        }
+        return age_groups.get(self.age_group, '')
 
     @property
     def total_matches(self):
@@ -206,13 +231,13 @@ class Player(models.Model):
 
         # Calculate economy rate
         if total_overs > 0:
-            stats['economy'] = float(total_runs) / total_overs
+            stats['economy'] = float(total_runs) / float(total_overs)
         else:
             stats['economy'] = 0.0
 
         # Calculate strike rate
         if total_wickets > 0:
-            stats['strike_rate'] = (total_overs * 6) / total_wickets
+            stats['strike_rate'] = (float(total_overs * 6) / float(total_wickets))
         else:
             stats['strike_rate'] = 0.0
 
@@ -306,7 +331,7 @@ class Player(models.Model):
                 bowling_average = 0.0
                 
             if total_overs > 0:
-                economy_rate = total_runs_conceded / float(total_overs)
+                economy_rate = float(total_runs_conceded) / float(total_overs)
             else:
                 economy_rate = 0.0
             
@@ -426,8 +451,8 @@ class Player(models.Model):
         
         # Calculate bowling average, economy, and strike rate
         bowling_average = total_runs_conceded / total_wickets if total_wickets > 0 else 0
-        economy_rate = total_runs_conceded / total_overs if total_overs > 0 else 0
-        bowling_strike_rate = (total_overs * 6) / total_wickets if total_wickets > 0 else 0
+        economy_rate = float(total_runs_conceded) / float(total_overs) if total_overs > 0 else 0
+        bowling_strike_rate = (float(total_overs * 6) / float(total_wickets)) if total_wickets > 0 else 0
         
         # Count five wicket hauls
         five_wickets = match_players.filter(wickets_taken__gte=5).count()
@@ -536,6 +561,10 @@ class Match(models.Model):
     opponent_extras_byes = models.IntegerField(default=0, verbose_name='Opponent Byes')
     opponent_extras_leg_byes = models.IntegerField(default=0, verbose_name='Opponent Leg Byes')
 
+    class Meta:
+        verbose_name = 'Match'
+        verbose_name_plural = 'Matches'
+
     def __str__(self):
         return f"{self.get_match_format_display()} vs {self.opponent} on {self.date}"
 
@@ -623,36 +652,50 @@ class MatchPlayer(models.Model):
     runouts = models.IntegerField(default=0)
     is_playing_xi = models.BooleanField(default=True)
     is_substitute = models.BooleanField(default=False)
-    selection_notes = models.TextField(
-        blank=True, 
-        null=True,
-        help_text="Add any special notes about player selection (e.g., U17 player promoted to first XI)"
-    )
-    approved_by = models.CharField(
-        max_length=100, 
-        blank=True, 
-        null=True,
-        help_text="Name of person who approved this player's selection"
-    )
+    selection_notes = models.TextField(blank=True, null=True)
+    approved_by = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
         unique_together = ('match', 'player', 'innings_number')
         ordering = ['innings_number', 'batting_order']
 
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        
-        if self.match and self.match.match_format in ['T20', 'ODI'] and self.innings_number != 1:
-            self.innings_number = 1
-        elif self.innings_number == 2 and self.match and self.match.match_format != 'TEST':
-            raise ValidationError({
-                'innings_number': 'Second innings is only allowed for Test matches'
-            })
+    def __str__(self):
+        return f"{self.player} - {self.match} - Innings {self.innings_number}"
 
-    def save(self, *args, **kwargs):
-        if not self.innings_number:
-            self.innings_number = 1
-        super().save(*args, **kwargs)
+class BattingInnings(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    match = models.ForeignKey(Match, on_delete=models.CASCADE)
+    innings_number = models.IntegerField(default=1)
+    batting_position = models.IntegerField()
+    runs_scored = models.IntegerField(default=0)
+    balls_faced = models.IntegerField(default=0)
+    fours = models.IntegerField(default=0)
+    sixes = models.IntegerField(default=0)
+    how_out = models.CharField(max_length=100, blank=True, null=True)
+    bowler = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, related_name='wickets_taken_set')
+    fielder = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, related_name='catches_taken_set')
+
+    class Meta:
+        unique_together = ('match', 'player', 'innings_number')
+        ordering = ['innings_number', 'batting_position']
+
+    def __str__(self):
+        return f"{self.player} - {self.match} - Innings {self.innings_number}"
+
+class BowlingInnings(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    match = models.ForeignKey(Match, on_delete=models.CASCADE)
+    innings_number = models.IntegerField(default=1)
+    overs = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+    maidens = models.IntegerField(default=0)
+    runs_conceded = models.IntegerField(default=0)
+    wickets = models.IntegerField(default=0)
+    wides = models.IntegerField(default=0)
+    no_balls = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ('match', 'player', 'innings_number')
+        ordering = ['innings_number']
 
     def __str__(self):
         return f"{self.player} - {self.match} - Innings {self.innings_number}"

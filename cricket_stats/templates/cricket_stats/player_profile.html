@@ -1,108 +1,371 @@
+{% extends "admin/base_site.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ player.first_name }} {{ player.last_name }} - Profile</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .player-photo {
-            max-width: 200px;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-        .stats-table th {
-            background-color: #f8f9fa;
-        }
-        .stats-table td, .stats-table th {
-            padding: 8px;
-            border: 1px solid #dee2e6;
-        }
-        .stats-section {
-            margin-bottom: 2rem;
-        }
-        .stats-header {
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            margin-bottom: 1rem;
-            border-radius: 4px;
-        }
-    </style>
-</head>
-<body class="bg-light">
-    <div class="container py-4">
-        <div class="row">
-            <!-- Left Column - Photo and Info -->
-            <div class="col-md-3">
-                {% if player.photo %}
-                    <img src="{{ player.photo.url }}" alt="{{ player }}" class="player-photo">
-                {% else %}
-                    <img src="{% static 'cricket_stats/img/default_player.png' %}" alt="Default" class="player-photo">
-                {% endif %}
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h4>{{ player.first_name }} {{ player.last_name }}</h4>
-                        <p class="text-muted mb-2">{{ player.get_primary_role_display }}</p>
-                        <hr>
-                        <p class="mb-2"><strong>Batting:</strong> {{ player.get_batting_style_display }}</p>
-                        <p class="mb-2"><strong>Bowling:</strong> {{ player.bowling_style|default:"N/A" }}</p>
-                        <p class="mb-2"><strong>Class:</strong> {{ player.player_class }}</p>
-                        <p class="mb-2"><strong>Joined:</strong> {{ player.year_joined }}</p>
-                        <p class="mb-0"><strong>Status:</strong> {% if player.is_active %}Active{% else %}Inactive{% endif %}</p>
+
+{% block title %}{{ player.first_name }} {{ player.last_name }} - Player Profile{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+<style>
+.content-main {
+    padding: 20px;
+}
+
+.card {
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+    background: var(--body-bg);
+    border: 1px solid var(--border-color);
+}
+
+.card-img-wrapper {
+    padding: 0;
+    margin-bottom: 0;
+    text-align: center;
+}
+
+.card-img-wrapper img {
+    margin-bottom: 0;
+    max-width: 200px;
+    height: auto;
+    object-fit: contain;
+}
+
+.card-img-top {
+    border-bottom: none;
+    margin-bottom: 0;
+    width: auto;
+    max-height: 200px;
+}
+
+.nav-tabs {
+    border-bottom: 2px solid var(--primary);
+}
+
+.nav-tabs .nav-link {
+    color: #212529 !important;  /* Dark text color for light mode */
+    border: none;
+    padding: 10px 20px;
+    margin-right: 5px;
+    border-radius: 4px 4px 0 0;
+    transition: all 0.2s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #226ba3 !important;  /* Bootstrap primary color */
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #226ba3;
+    color: #ffffff !important;
+    border: none;
+}
+
+.stat-card {
+    background: var(--body-bg);
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+}
+
+.table {
+    margin: 0;
+    color: var(--body-fg);
+}
+
+.table td {
+    padding: 8px;
+    border-top: 1px solid var(--border-color);
+}
+
+h5 {
+    color: var(--primary);
+    margin-bottom: 15px;
+}
+
+.back-button {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #226ba3;
+    color: #ffffff !important;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border: 1px solid #226ba3;
+    transition: all 0.2s ease;
+}
+
+.back-button:hover {
+    background-color: #226ba3;
+    border-color: #226ba3;
+    color: #ffffff !important;
+    text-decoration: none;
+}
+</style>
+{% endblock extrastyle %}
+
+{% block content %}
+<div id="content-main">
+    <a href="{% url 'cricket_stats:player_list' %}" class="back-button">
+        <i class="bi bi-arrow-left"></i> Back to Players
+    </a>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-img-wrapper mb-0">
+                    {% if player.photo %}
+                        <img src="{{ player.photo.url }}" class="card-img-top mb-0" alt="{{ player.first_name }} {{ player.last_name }}" onerror="this.src='{% static 'cricket_stats/images/default-player.png' %}'">
+                    {% else %}
+                        <img src="{% static 'cricket_stats/images/default-player.png' %}" class="card-img-top mb-0" alt="Default Player Image">
+                    {% endif %}
+                </div>
+                <div class="card-body pt-1 pb-3">
+                    <h5 class="card-title mb-2">{{ player.first_name }} {{ player.last_name }}</h5>
+                    <div class="player-details">
+                        <p class="mb-1"><strong>Role:</strong> {{ player.get_primary_role_display }}</p>
+                        <p class="mb-1"><strong>Age Group:</strong> {{ player.get_age_group_display }}</p>
+                        <p class="mb-1"><strong>Batting Style:</strong> {{ player.get_batting_style_display }}</p>
+                        <p class="mb-1"><strong>Bowling Style:</strong> {{ player.bowling_style|default:"Not specified" }}</p>
+                        <p class="mb-1"><strong>Jersey Number:</strong> {{ player.jersey_number|default:"Not assigned" }}</p>
+                        <p class="mb-1"><strong>Date of Birth:</strong> {{ player.date_of_birth|date:"F j, Y"|default:"Not provided" }}</p>
+                        {% if player.additional_info %}
+                        <p class="mb-1"><strong>Additional Info:</strong> {{ player.additional_info }}</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Right Column - Combined Statistics -->
-            <div class="col-md-9">
-                <div class="stats-section">
-                    <div class="stats-header">
-                        <h5 class="mb-0">Career Statistics</h5>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-bordered stats-table">
-                            <thead>
-                                <tr>
-                                    <th colspan="4">Batting</th>
-                                    <th colspan="4">Bowling</th>
-                                    <th colspan="3">Fielding</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>Matches:</strong> {{ test_stats.batting.matches + odi_stats.batting.matches + t20_stats.batting.matches }}</td>
-                                    <td><strong>Runs:</strong> {{ test_stats.batting.runs + odi_stats.batting.runs + t20_stats.batting.runs }}</td>
-                                    <td><strong>Average:</strong> {{ ((test_stats.batting.runs + odi_stats.batting.runs + t20_stats.batting.runs) / (test_stats.batting.innings + odi_stats.batting.innings + t20_stats.batting.innings))|floatformat:2 }}</td>
-                                    <td><strong>Strike Rate:</strong> {{ ((test_stats.batting.runs + odi_stats.batting.runs + t20_stats.batting.runs) / (test_stats.batting.balls_faced + odi_stats.batting.balls_faced + t20_stats.batting.balls_faced)) * 100|floatformat:2 }}</td>
-                                    <td><strong>Wickets:</strong> {{ test_stats.bowling.wickets + odi_stats.bowling.wickets + t20_stats.bowling.wickets }}</td>
-                                    <td><strong>Average:</strong> {{ ((test_stats.bowling.runs + odi_stats.bowling.runs + t20_stats.bowling.runs) / (test_stats.bowling.wickets + odi_stats.bowling.wickets + t20_stats.bowling.wickets))|floatformat:2 }}</td>
-                                    <td><strong>Economy:</strong> {{ ((test_stats.bowling.runs + odi_stats.bowling.runs + t20_stats.bowling.runs) / (test_stats.bowling.overs + odi_stats.bowling.overs + t20_stats.bowling.overs))|floatformat:2 }}</td>
-                                    <td><strong>Best:</strong> {{ test_stats.bowling.best_bowling }} / {{ odi_stats.bowling.best_bowling }} / {{ t20_stats.bowling.best_bowling }}</td>
-                                    <td><strong>Catches:</strong> {{ test_stats.fielding.catches + odi_stats.fielding.catches + t20_stats.fielding.catches }}</td>
-                                    <td><strong>Stumpings:</strong> {{ test_stats.fielding.stumpings + odi_stats.fielding.stumpings + t20_stats.fielding.stumpings }}</td>
-                                    <td><strong>Run Outs:</strong> {{ test_stats.fielding.runouts + odi_stats.fielding.runouts + t20_stats.fielding.runouts }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Innings:</strong> {{ test_stats.batting.innings + odi_stats.batting.innings + t20_stats.batting.innings }}</td>
-                                    <td><strong>Highest:</strong> {{ test_stats.batting.highest_score }} / {{ odi_stats.batting.highest_score }} / {{ t20_stats.batting.highest_score }}</td>
-                                    <td><strong>Centuries:</strong> {{ test_stats.batting.hundreds + odi_stats.batting.hundreds + t20_stats.batting.hundreds }}</td>
-                                    <td><strong>Fifties:</strong> {{ test_stats.batting.fifties + odi_stats.batting.fifties + t20_stats.batting.fifties }}</td>
-                                    <td><strong>Overs:</strong> {{ test_stats.bowling.overs + odi_stats.bowling.overs + t20_stats.bowling.overs }}</td>
-                                    <td><strong>Maidens:</strong> {{ test_stats.bowling.maidens + odi_stats.bowling.maidens + t20_stats.bowling.maidens }}</td>
-                                    <td><strong>Wides:</strong> {{ test_stats.bowling.wides + odi_stats.bowling.wides + t20_stats.bowling.wides }}</td>
-                                    <td><strong>No Balls:</strong> {{ test_stats.bowling.no_balls + odi_stats.bowling.no_balls + t20_stats.bowling.no_balls }}</td>
-                                    <td colspan="3"></td>
-                                </tr>
-                            </tbody>
-                        </table>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <nav>
+                        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                            <button class="nav-link active" id="nav-overall-tab" data-bs-toggle="tab" data-bs-target="#nav-overall" type="button" role="tab">
+                                <i class="bi bi-graph-up"></i> Overall
+                            </button>
+                            <button class="nav-link" id="nav-test-tab" data-bs-toggle="tab" data-bs-target="#nav-test" type="button" role="tab">
+                                <i class="bi bi-trophy"></i> Test
+                            </button>
+                            <button class="nav-link" id="nav-odi-tab" data-bs-toggle="tab" data-bs-target="#nav-odi" type="button" role="tab">
+                                <i class="bi bi-calendar-event"></i> One Day 50 Over
+                            </button>
+                            <button class="nav-link" id="nav-t20-tab" data-bs-toggle="tab" data-bs-target="#nav-t20" type="button" role="tab">
+                                <i class="bi bi-lightning"></i> T20
+                            </button>
+                        </div>
+                    </nav>
+
+                    <div class="tab-content pt-4" id="nav-tabContent">
+                        <!-- Overall Stats Tab -->
+                        <div class="tab-pane fade show active" id="nav-overall" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="stat-card">
+                                        <h5>Overall Batting</h5>
+                                        <table class="table">
+                                            <tr><td>Matches</td><td>{{ overall_stats.batting.matches }}</td></tr>
+                                            <tr><td>Runs</td><td>{{ overall_stats.batting.runs }}</td></tr>
+                                            <tr><td>Average</td><td>{{ overall_stats.batting.average|floatformat:2 }}</td></tr>
+                                            <tr><td>Strike Rate</td><td>{{ overall_stats.batting.strike_rate|floatformat:2 }}</td></tr>
+                                            <tr><td>Highest Score</td><td>{{ overall_stats.batting.highest_score }}</td></tr>
+                                            <tr><td>100s</td><td>{{ overall_stats.batting.hundreds }}</td></tr>
+                                            <tr><td>50s</td><td>{{ overall_stats.batting.fifties }}</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="stat-card">
+                                        <h5>Overall Bowling</h5>
+                                        <table class="table">
+                                            <tr><td>Wickets</td><td>{{ overall_stats.bowling.wickets }}</td></tr>
+                                            <tr><td>Economy</td><td>{{ overall_stats.bowling.economy|floatformat:2 }}</td></tr>
+                                            <tr><td>Average</td><td>{{ overall_stats.bowling.average|floatformat:2 }}</td></tr>
+                                            <tr><td>Strike Rate</td><td>{{ overall_stats.bowling.strike_rate|floatformat:2 }}</td></tr>
+                                            <tr><td>5 Wicket Hauls</td><td>{{ overall_stats.bowling.five_wickets }}</td></tr>
+                                        </table>
+                                    </div>
+                                    <div class="stat-card">
+                                        <h5>Overall Fielding</h5>
+                                        <table class="table">
+                                            <tr><td>Catches</td><td>{{ overall_stats.fielding.catches }}</td></tr>
+                                            <tr><td>Stumpings</td><td>{{ overall_stats.fielding.stumpings }}</td></tr>
+                                            <tr><td>Run Outs</td><td>{{ overall_stats.fielding.runouts }}</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Test Stats Tab -->
+                        <div class="tab-pane fade" id="nav-test" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="stat-card">
+                                        <h5>Test Batting</h5>
+                                        <table class="table">
+                                            <tr><td>Matches</td><td>{{ test_stats.batting.matches }}</td></tr>
+                                            <tr><td>Runs</td><td>{{ test_stats.batting.runs }}</td></tr>
+                                            <tr><td>Average</td><td>{{ test_stats.batting.average|floatformat:2 }}</td></tr>
+                                            <tr><td>Strike Rate</td><td>{{ test_stats.batting.strike_rate|floatformat:2 }}</td></tr>
+                                            <tr><td>Highest Score</td><td>{{ test_stats.batting.highest_score }}</td></tr>
+                                            <tr><td>100s</td><td>{{ test_stats.batting.hundreds }}</td></tr>
+                                            <tr><td>50s</td><td>{{ test_stats.batting.fifties }}</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="stat-card">
+                                        <h5>Test Bowling</h5>
+                                        <table class="table">
+                                            <tr><td>Wickets</td><td>{{ test_stats.bowling.wickets }}</td></tr>
+                                            <tr><td>Economy</td><td>{{ test_stats.bowling.economy|floatformat:2 }}</td></tr>
+                                            <tr><td>Average</td><td>{{ test_stats.bowling.average|floatformat:2 }}</td></tr>
+                                            <tr><td>Strike Rate</td><td>{{ test_stats.bowling.strike_rate|floatformat:2 }}</td></tr>
+                                            <tr><td>5 Wicket Hauls</td><td>{{ test_stats.bowling.five_wickets }}</td></tr>
+                                        </table>
+                                    </div>
+                                    <div class="stat-card">
+                                        <h5>Test Fielding</h5>
+                                        <table class="table">
+                                            <tr><td>Catches</td><td>{{ test_stats.fielding.catches }}</td></tr>
+                                            <tr><td>Stumpings</td><td>{{ test_stats.fielding.stumpings }}</td></tr>
+                                            <tr><td>Run Outs</td><td>{{ test_stats.fielding.runouts }}</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ODI Stats Tab -->
+                        <div class="tab-pane fade" id="nav-odi" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="stat-card">
+                                        <h5>One Day 50 Over Batting</h5>
+                                        <table class="table">
+                                            <tr><td>Matches</td><td>{{ odi_stats.batting.matches }}</td></tr>
+                                            <tr><td>Runs</td><td>{{ odi_stats.batting.runs }}</td></tr>
+                                            <tr><td>Average</td><td>{{ odi_stats.batting.average|floatformat:2 }}</td></tr>
+                                            <tr><td>Strike Rate</td><td>{{ odi_stats.batting.strike_rate|floatformat:2 }}</td></tr>
+                                            <tr><td>Highest Score</td><td>{{ odi_stats.batting.highest_score }}</td></tr>
+                                            <tr><td>100s</td><td>{{ odi_stats.batting.hundreds }}</td></tr>
+                                            <tr><td>50s</td><td>{{ odi_stats.batting.fifties }}</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="stat-card">
+                                        <h5>One Day 50 Over Bowling</h5>
+                                        <table class="table">
+                                            <tr><td>Wickets</td><td>{{ odi_stats.bowling.wickets }}</td></tr>
+                                            <tr><td>Economy</td><td>{{ odi_stats.bowling.economy|floatformat:2 }}</td></tr>
+                                            <tr><td>Average</td><td>{{ odi_stats.bowling.average|floatformat:2 }}</td></tr>
+                                            <tr><td>Strike Rate</td><td>{{ odi_stats.bowling.strike_rate|floatformat:2 }}</td></tr>
+                                            <tr><td>5 Wicket Hauls</td><td>{{ odi_stats.bowling.five_wickets }}</td></tr>
+                                        </table>
+                                    </div>
+                                    <div class="stat-card">
+                                        <h5>One Day 50 Over Fielding</h5>
+                                        <table class="table">
+                                            <tr><td>Catches</td><td>{{ odi_stats.fielding.catches }}</td></tr>
+                                            <tr><td>Stumpings</td><td>{{ odi_stats.fielding.stumpings }}</td></tr>
+                                            <tr><td>Run Outs</td><td>{{ odi_stats.fielding.runouts }}</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- T20 Stats Tab -->
+                        <div class="tab-pane fade" id="nav-t20" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="stat-card">
+                                        <h5>T20 Batting</h5>
+                                        <table class="table">
+                                            <tr><td>Matches</td><td>{{ t20_stats.batting.matches }}</td></tr>
+                                            <tr><td>Runs</td><td>{{ t20_stats.batting.runs }}</td></tr>
+                                            <tr><td>Average</td><td>{{ t20_stats.batting.average|floatformat:2 }}</td></tr>
+                                            <tr><td>Strike Rate</td><td>{{ t20_stats.batting.strike_rate|floatformat:2 }}</td></tr>
+                                            <tr><td>Highest Score</td><td>{{ t20_stats.batting.highest_score }}</td></tr>
+                                            <tr><td>100s</td><td>{{ t20_stats.batting.hundreds }}</td></tr>
+                                            <tr><td>50s</td><td>{{ t20_stats.batting.fifties }}</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="stat-card">
+                                        <h5>T20 Bowling</h5>
+                                        <table class="table">
+                                            <tr><td>Wickets</td><td>{{ t20_stats.bowling.wickets }}</td></tr>
+                                            <tr><td>Economy</td><td>{{ t20_stats.bowling.economy|floatformat:2 }}</td></tr>
+                                            <tr><td>Average</td><td>{{ t20_stats.bowling.average|floatformat:2 }}</td></tr>
+                                            <tr><td>Strike Rate</td><td>{{ t20_stats.bowling.strike_rate|floatformat:2 }}</td></tr>
+                                            <tr><td>5 Wicket Hauls</td><td>{{ t20_stats.bowling.five_wickets }}</td></tr>
+                                        </table>
+                                    </div>
+                                    <div class="stat-card">
+                                        <h5>T20 Fielding</h5>
+                                        <table class="table">
+                                            <tr><td>Catches</td><td>{{ t20_stats.fielding.catches }}</td></tr>
+                                            <tr><td>Stumpings</td><td>{{ t20_stats.fielding.stumpings }}</td></tr>
+                                            <tr><td>Run Outs</td><td>{{ t20_stats.fielding.runouts }}</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap tabs
+    var triggerTabList = [].slice.call(document.querySelectorAll('#nav-tab button'));
+    triggerTabList.forEach(function(triggerEl) {
+        new bootstrap.Tab(triggerEl);
+    });
+
+    // Handle tab state in URL
+    function setActiveTab() {
+        var hash = window.location.hash || '#overall';
+        var tab = document.querySelector(`button[data-bs-target="#nav-${hash.replace('#', '')}"]`);
+        if (tab) {
+            new bootstrap.Tab(tab).show();
+        }
+    }
+
+    // Update URL when tab changes
+    triggerTabList.forEach(function(triggerEl) {
+        triggerEl.addEventListener('shown.bs.tab', function(event) {
+            var id = event.target.getAttribute('data-bs-target').replace('#nav-', '');
+            window.history.replaceState(null, null, `#${id}`);
+        });
+    });
+
+    // Handle initial load and navigation
+    window.addEventListener('hashchange', setActiveTab);
+    setActiveTab();
+
+    // Handle image errors
+    document.querySelectorAll('img.card-img-top').forEach(function(img) {
+        img.addEventListener('error', function() {
+            this.src = "{% static 'cricket_stats/images/default-player.png' %}";
+        });
+    });
+});
+</script>
+{% endblock extra_js %}
+{% endblock content %}
