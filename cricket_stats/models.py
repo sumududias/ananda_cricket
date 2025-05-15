@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Sum, Count, F, ExpressionWrapper, FloatField, Q, Max
+from django.core.exceptions import ValidationError
 
 class Player(models.Model):
     ROLES = (
@@ -506,6 +507,101 @@ class Player(models.Model):
         """Get player statistics for T20 matches"""
         return self.get_stats_by_format('T20')
 
+class Match(models.Model):
+    MATCH_FORMATS = [
+        ('TEST', 'Test Match'),
+        ('ODI', 'One Day International'),
+        ('T20', 'Twenty20'),
+    ]
+    
+    team = models.CharField(max_length=100, default='Ananda College')
+    opponent = models.CharField(max_length=100)
+    match_date = models.DateField()
+    venue = models.CharField(max_length=100, null=True, blank=True)
+    format = models.CharField(max_length=4, choices=MATCH_FORMATS, default='ODI')
+    toss_winner = models.CharField(max_length=100, null=True, blank=True)
+    toss_decision = models.CharField(max_length=10, null=True, blank=True)
+    result = models.CharField(max_length=200, null=True, blank=True)
+    tournament = models.ForeignKey('Tournament', on_delete=models.SET_NULL, null=True, blank=True)
+    man_of_match = models.ForeignKey('Player', on_delete=models.SET_NULL, null=True, blank=True, related_name='man_of_match_matches')
+    
+    # Add extras fields
+    ananda_extras_byes = models.IntegerField(default=0)
+    ananda_extras_leg_byes = models.IntegerField(default=0)
+    opponent_extras_byes = models.IntegerField(default=0)
+    opponent_extras_leg_byes = models.IntegerField(default=0)
+    match_type = models.CharField(max_length=20, default='League')
+    
+    # Add innings totals
+    first_innings_total = models.IntegerField(default=0)
+    second_innings_total = models.IntegerField(default=0)
+    opponent_first_innings = models.IntegerField(default=0)
+    opponent_second_innings = models.IntegerField(default=0)
+
+    class Meta:
+        verbose_name_plural = 'Matches'
+        ordering = ['-match_date']
+
+    def clean(self):
+        if self.format not in [f[0] for f in self.MATCH_FORMATS]:
+            raise ValidationError('Invalid match format')
+        
+        # Reset second innings totals for non-test matches
+        if self.format != 'TEST':
+            self.second_innings_total = 0
+            self.opponent_second_innings = 0
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    def calculate_totals(self):
+        """Calculate and update match totals"""
+        first_innings = self.matchplayer_set.filter(innings_number=1)
+        self.first_innings_total = sum(p.runs_scored or 0 for p in first_innings)
+        
+        if self.format == 'TEST':
+            second_innings = self.matchplayer_set.filter(innings_number=2)
+            self.second_innings_total = sum(p.runs_scored or 0 for p in second_innings)
+        else:
+            self.second_innings_total = 0
+            self.opponent_second_innings = 0
+        
+        self.save()
+
+    def __str__(self):
+        return f"{self.team} vs {self.opponent} - {self.match_date}"
+
+class MatchPlayer(models.Model):
+    match = models.ForeignKey(Match, on_delete=models.CASCADE)
+    player = models.ForeignKey('Player', on_delete=models.CASCADE)
+    innings_number = models.IntegerField(default=1)
+    batting_order = models.IntegerField(null=True, blank=True)
+    runs_scored = models.IntegerField(null=True, blank=True)
+    balls_faced = models.IntegerField(null=True, blank=True)
+    fours = models.IntegerField(null=True, blank=True)
+    sixes = models.IntegerField(null=True, blank=True)
+    how_out = models.CharField(max_length=100, null=True, blank=True)
+    overs_bowled = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    maidens = models.IntegerField(null=True, blank=True)
+    runs_conceded = models.IntegerField(null=True, blank=True)
+    wickets_taken = models.IntegerField(null=True, blank=True)
+    wide_balls = models.IntegerField(null=True, blank=True)
+    no_balls = models.IntegerField(null=True, blank=True)
+    catches = models.IntegerField(null=True, blank=True)
+    stumpings = models.IntegerField(null=True, blank=True)
+    runouts = models.IntegerField(null=True, blank=True)
+    is_playing_xi = models.BooleanField(default=True)
+    is_substitute = models.BooleanField(default=False)
+    selection_notes = models.TextField(null=True, blank=True)
+    approved_by = models.CharField(max_length=100, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('match', 'player', 'innings_number')
+
+    def __str__(self):
+        return f"{self.player.name} - {self.match}"
+
 class Team(models.Model):
     name = models.CharField(max_length=100)
     season = models.CharField(max_length=20)
@@ -524,143 +620,6 @@ class Tournament(models.Model):
 
     def __str__(self):
         return f"{self.name} {self.season}"
-
-class Match(models.Model):
-    MATCH_TYPE_CHOICES = [
-        ('TOURNAMENT', 'Tournament'),
-        ('FRIENDLY', 'Friendly')
-    ]
-    
-    MATCH_FORMATS = [
-        ('TEST', 'Test Match'),
-        ('ODI', 'One Day 50 Over Match'),
-        ('T20', 'Twenty20'),
-    ]
-    
-    RESULT_CHOICES = [
-        ('WON', 'Won'),
-        ('LOST', 'Lost'),
-        ('DRAW', 'Draw'),
-        ('TIE', 'Tie'),
-        ('NR', 'No Result')
-    ]
-
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    opponent = models.CharField(max_length=100)
-    date = models.DateField()
-    venue = models.CharField(max_length=100)
-    match_type = models.CharField(max_length=20, choices=MATCH_TYPE_CHOICES)
-    match_format = models.CharField(max_length=4, choices=MATCH_FORMATS, default='TEST')
-    tournament = models.ForeignKey('Tournament', on_delete=models.SET_NULL, null=True, blank=True)
-    result = models.CharField(max_length=100, blank=True, null=True)
-    man_of_match = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True)
-    
-    # Extras
-    ananda_extras_byes = models.IntegerField(default=0, verbose_name='Byes')
-    ananda_extras_leg_byes = models.IntegerField(default=0, verbose_name='Leg Byes')
-    opponent_extras_byes = models.IntegerField(default=0, verbose_name='Opponent Byes')
-    opponent_extras_leg_byes = models.IntegerField(default=0, verbose_name='Opponent Leg Byes')
-
-    class Meta:
-        verbose_name = 'Match'
-        verbose_name_plural = 'Matches'
-
-    def __str__(self):
-        return f"{self.get_match_format_display()} vs {self.opponent} on {self.date}"
-
-    @property
-    def is_test_match(self):
-        return self.match_format == 'TEST'
-
-    @property
-    def max_innings(self):
-        """Return the maximum number of innings allowed for this match format"""
-        return 2 if self.match_format == 'TEST' else 1
-
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        from django.db import models
-        super().clean()
-        
-        # Only validate existing matches (ones with primary keys)
-        if self.pk:
-            if self.match_format in ['T20', 'ODI']:
-                # Only check players who actually batted (have runs or balls faced)
-                has_batted = models.Q(runs_scored__gt=0) | models.Q(balls_faced__gt=0)
-                invalid_players = self.matchplayer_set.filter(innings_number__gt=1).filter(has_batted)
-                if invalid_players.exists():
-                    raise ValidationError("Only TEST matches can have second innings")
-
-    def save(self, *args, **kwargs):
-        # Save first to ensure we have a primary key
-        super().save(*args, **kwargs)
-        
-        # After saving, enforce innings rules based on match format
-        if self.match_format in ['T20', 'ODI']:
-            self.matchplayer_set.all().update(innings_number=1)
-
-    @property
-    def ananda_total_extras(self):
-        """Calculate total extras for Ananda team"""
-        player_extras = self.matchplayer_set.filter(
-            innings_number=1
-        ).aggregate(
-            total_wides=Sum('wide_balls', default=0),
-            total_no_balls=Sum('no_balls', default=0)
-        )
-        return (
-            self.ananda_extras_byes +
-            self.ananda_extras_leg_byes +
-            player_extras['total_wides'] +
-            player_extras['total_no_balls']
-        )
-
-    @property
-    def opponent_total_extras(self):
-        """Calculate total extras for opponent team"""
-        player_extras = self.matchplayer_set.filter(
-            innings_number=2
-        ).aggregate(
-            total_wides=Sum('wide_balls', default=0),
-            total_no_balls=Sum('no_balls', default=0)
-        )
-        return (
-            self.opponent_extras_byes +
-            self.opponent_extras_leg_byes +
-            player_extras['total_wides'] +
-            player_extras['total_no_balls']
-        )
-
-class MatchPlayer(models.Model):
-    match = models.ForeignKey(Match, on_delete=models.CASCADE)
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    innings_number = models.IntegerField(default=1)
-    batting_order = models.IntegerField(null=True, blank=True)
-    runs_scored = models.IntegerField(default=0)
-    balls_faced = models.IntegerField(default=0)
-    fours = models.IntegerField(default=0)
-    sixes = models.IntegerField(default=0)
-    how_out = models.CharField(max_length=100, blank=True, default='')
-    overs_bowled = models.DecimalField(max_digits=4, decimal_places=1, default=0)
-    maidens = models.IntegerField(default=0)
-    runs_conceded = models.IntegerField(default=0)
-    wickets_taken = models.IntegerField(default=0)
-    wide_balls = models.IntegerField(default=0)
-    no_balls = models.IntegerField(default=0)
-    catches = models.IntegerField(default=0)
-    stumpings = models.IntegerField(default=0)
-    runouts = models.IntegerField(default=0)
-    is_playing_xi = models.BooleanField(default=True)
-    is_substitute = models.BooleanField(default=False)
-    selection_notes = models.TextField(blank=True, null=True)
-    approved_by = models.CharField(max_length=100, blank=True, null=True)
-
-    class Meta:
-        unique_together = ('match', 'player', 'innings_number')
-        ordering = ['innings_number', 'batting_order']
-
-    def __str__(self):
-        return f"{self.player} - {self.match} - Innings {self.innings_number}"
 
 class BattingInnings(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)

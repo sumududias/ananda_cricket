@@ -118,8 +118,8 @@ def player_profile(request, player_id):
             'innings': match_qs.filter(batting_order__isnull=False).count(),
             'runs': match_qs.aggregate(Sum('runs_scored'))['runs_scored__sum'] or 0,
             'balls_faced': match_qs.aggregate(Sum('balls_faced'))['balls_faced__sum'] or 0,
-            'fours': match_qs.aggregate(Sum('fours'))['fours__sum'] or 0,
-            'sixes': match_qs.aggregate(Sum('sixes'))['sixes__sum'] or 0,
+            'fours': match_qs.aggregate(Sum('fours'))['fours__sum'] or 0 if match_qs.exists() else 0,
+            'sixes': match_qs.aggregate(Sum('sixes'))['sixes__sum'] or 0 if match_qs.exists() else 0,
             'highest_score': match_qs.aggregate(Max('runs_scored'))['runs_scored__max'] or 0,
             'hundreds': match_qs.filter(runs_scored__gte=100).count(),
             'fifties': match_qs.filter(runs_scored__gte=50, runs_scored__lt=100).count(),
@@ -203,9 +203,9 @@ def player_profile(request, player_id):
     context = {
         'player': player,
         'overall_stats': calculate_stats(match_stats),
-        'test_stats': calculate_stats(match_stats.filter(match__match_format='TEST')),
-        'odi_stats': calculate_stats(match_stats.filter(match__match_format='ODI')),
-        't20_stats': calculate_stats(match_stats.filter(match__match_format='T20')),
+        'test_stats': calculate_stats(match_stats.filter(match__format='TEST')),
+        'odi_stats': calculate_stats(match_stats.filter(match__format='ODI')),
+        't20_stats': calculate_stats(match_stats.filter(match__format='T20')),
     }
     
     return render(request, 'cricket_stats/player_profile.html', context)
