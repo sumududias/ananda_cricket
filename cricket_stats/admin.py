@@ -56,7 +56,7 @@ class MatchPlayerInline(admin.TabularInline):
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
-        if obj and obj.match_format != 'TEST':
+        if obj and obj.format != 'TEST':
             # For non-TEST matches, only show 1st innings
             formset.form.base_fields['innings_number'].widget.choices = [
                 (1, '1st Innings'),
@@ -88,17 +88,17 @@ class SubstitutionInline(admin.TabularInline):
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
-    list_display = ['date', 'get_team_display', 'get_opponent_display', 'match_format', 'get_result_display', 'man_of_match']
-    list_filter = ['match_format', 'tournament', 'date']
-    search_fields = ['team__name', 'opponent', 'tournament__name']
-    inlines = [MatchPlayerInline, SubstitutionInline]
+    list_display = ['match_date', 'team', 'opponent', 'format', 'result']
+    list_filter = ['format', 'tournament', 'match_date']
+    search_fields = ['team', 'opponent']
+    date_hierarchy = 'match_date'
 
     fieldsets = (
         ('Basic Information', {
             'fields': (
                 ('team', 'opponent'),
-                ('date', 'venue'),
-                ('match_type', 'match_format'),
+                ('match_date', 'venue'),
+                ('match_type', 'format'),
                 'tournament'
             )
         }),
@@ -148,6 +148,8 @@ class MatchAdmin(admin.ModelAdmin):
     class Media:
         js = ('admin/js/jquery.init.js', 'admin/js/inlines.js')
 
+    inlines = [MatchPlayerInline, SubstitutionInline]
+
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
     list_display = ['name', 'display_photo', 'jersey_number', 'dob', 'primary_role']
@@ -194,10 +196,9 @@ class TournamentAdmin(admin.ModelAdmin):
 
 @admin.register(MatchPlayer)
 class MatchPlayerAdmin(admin.ModelAdmin):
-    list_display = ('match', 'player', 'runs_scored', 'wickets_taken')
-    list_filter = ('match', 'player')
+    list_display = ('player', 'match', 'innings_number', 'runs_scored', 'wickets_taken')
+    list_filter = ('match', 'innings_number', 'is_playing_xi')
     search_fields = ('player__first_name', 'player__last_name')
-    form = MatchPlayerInlineForm
 
 @admin.register(Substitution)
 class SubstitutionAdmin(admin.ModelAdmin):

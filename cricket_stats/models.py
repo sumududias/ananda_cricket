@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Sum, Count, F, ExpressionWrapper, FloatField, Q, Max
 from django.core.exceptions import ValidationError
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Player(models.Model):
     ROLES = (
@@ -552,22 +555,26 @@ class Match(models.Model):
             self.opponent_second_innings = 0
 
     def save(self, *args, **kwargs):
-        self.clean()
+        # Only calculate totals if this is a new save or if runs have been modified
+        if not self.pk or 'runs_scored' in kwargs.get('update_fields', []):
+            self.calculate_totals()
         super().save(*args, **kwargs)
 
     def calculate_totals(self):
         """Calculate and update match totals"""
-        first_innings = self.matchplayer_set.filter(innings_number=1)
-        self.first_innings_total = sum(p.runs_scored or 0 for p in first_innings)
-        
-        if self.format == 'TEST':
-            second_innings = self.matchplayer_set.filter(innings_number=2)
-            self.second_innings_total = sum(p.runs_scored or 0 for p in second_innings)
-        else:
-            self.second_innings_total = 0
-            self.opponent_second_innings = 0
-        
-        self.save()
+        try:
+            first_innings = self.matchplayer_set.filter(innings_number=1)
+            self.first_innings_total = sum(p.runs_scored or 0 for p in first_innings)
+            
+            if self.format == 'TEST':
+                second_innings = self.matchplayer_set.filter(innings_number=2)
+                self.second_innings_total = sum(p.runs_scored or 0 for p in second_innings)
+            else:
+                self.second_innings_total = 0
+                self.opponent_second_innings = 0
+        except Exception as e:
+            logger.error(f"Error calculating match totals: {str(e)}")
+            raise
 
     def __str__(self):
         return f"{self.team} vs {self.opponent} - {self.match_date}"

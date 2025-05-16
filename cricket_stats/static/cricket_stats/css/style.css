@@ -308,3 +308,106 @@ input:checked + .slider:before {
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     }
 }
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+    /* Move logo and search to bottom */
+    .module {
+        position: relative;
+    }
+
+    .module h2 {
+        margin-bottom: 1rem;
+    }
+
+    .module img {
+        display: none;
+    }
+
+    .searchbar {
+        display: none;
+    }
+
+    /* Add bottom navigation */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--header-bg);
+        border-top: 1px solid var(--border-color);
+        padding: 0.5rem;
+        display: flex;
+        justify-content: space-around;
+        z-index: 1000;
+    }
+
+    .bottom-nav .nav-item {
+        flex: 1;
+        text-align: center;
+        padding: 0.5rem;
+    }
+
+    .bottom-nav .nav-link {
+        display: block;
+        color: var(--text-color);
+        text-decoration: none;
+        padding: 0.5rem;
+    }
+
+    .bottom-nav .nav-link i {
+        display: block;
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .bottom-nav .nav-link span {
+        font-size: 0.875rem;
+        display: block;
+    }
+
+    /* Adjust button sizes */
+    .button {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Adjust table layout */
+    .table-responsive {
+        margin-top: 1rem;
+    }
+
+    /* Adjust card layout */
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    /* Adjust form field width */
+    .field-box {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Adjust tabs layout */
+    .nav-tabs {
+        margin-top: 1rem;
+    }
+
+    /* Adjust filter layout */
+    .changelist-filter {
+        margin-top: 1rem;
+    }
+}
+
+/* Additional mobile-specific adjustments */
+@media (max-width: 480px) {
+    /* Adjust button padding */
+    .button {
+        padding: 0.5rem;
+    }
+
+    /* Adjust header spacing */
+    .module {
+        padding: 1rem;
+    }
+}
