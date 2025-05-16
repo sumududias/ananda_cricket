@@ -82,6 +82,19 @@ DATABASES = {
     }
 }
 
+# PythonAnywhere database configuration
+if 'PYTHONANYWHERE_SITE' in os.environ:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'anandacricket$ananda_cricket',
+        'USER': 'anandacricket',
+        'PASSWORD': '!amtheB3st',
+        'HOST': 'anandacricket.mysql.pythonanywhere-services.com',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    }
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
