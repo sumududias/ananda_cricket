@@ -1,0 +1,238 @@
+{% extends 'cricket_stats/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}{% if form.instance.id %}Edit{% else %}Add{% endif %} Player Performance{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5>{{ title }}</h5>
+            <h6 class="mt-2">Match: {{ match }}</h6>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_player">Player</label>
+                            {{ form.player|add_class:"form-control select2" }}
+                            {% if form.player.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.player.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_innings_number">Innings Number</label>
+                            {{ form.innings_number|add_class:"form-control" }}
+                            {% if form.innings_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.innings_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <h5 class="mt-4 mb-3">Batting Details</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_batting_order">Batting Order</label>
+                            {{ form.batting_order|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_runs_scored">Runs Scored</label>
+                            {{ form.runs_scored|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_balls_faced">Balls Faced</label>
+                            {{ form.balls_faced|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_fours">Fours</label>
+                            {{ form.fours|add_class:"form-control" }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_sixes">Sixes</label>
+                            {{ form.sixes|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        {% include 'cricket_stats/includes/searchable_dropdown.html' with 
+                            field=form.how_out 
+                            field_id="id_how_out" 
+                            placeholder="Select dismissal type" 
+                            search_url=dismissal_type_search_url 
+                            add_url=add_dropdown_url 
+                            option_type="dismissal_type" 
+                        %}
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_bowler">Bowler</label>
+                            {{ form.bowler|add_class:"form-control select2" }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_fielder">Fielder</label>
+                            {{ form.fielder|add_class:"form-control select2" }}
+                        </div>
+                    </div>
+                </div>
+                
+                <h5 class="mt-4 mb-3">Bowling Details</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_overs_bowled">Overs Bowled</label>
+                            {{ form.overs_bowled|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_maidens_bowled">Maidens</label>
+                            {{ form.maidens_bowled|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_runs_conceded">Runs Conceded</label>
+                            {{ form.runs_conceded|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_wickets_taken">Wickets Taken</label>
+                            {{ form.wickets_taken|add_class:"form-control" }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_wides">Wides</label>
+                            {{ form.wides|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_no_balls">No Balls</label>
+                            {{ form.no_balls|add_class:"form-control" }}
+                        </div>
+                    </div>
+                </div>
+                
+                <h5 class="mt-4 mb-3">Fielding Details</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_catches">Catches</label>
+                            {{ form.catches|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_run_outs">Run Outs</label>
+                            {{ form.run_outs|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_stumpings">Stumpings</label>
+                            {{ form.stumpings|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_direct_hits">Direct Hits</label>
+                            {{ form.direct_hits|add_class:"form-control" }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_dropped_catches">Dropped Catches</label>
+                            {{ form.dropped_catches|add_class:"form-control" }}
+                        </div>
+                    </div>
+                </div>
+                
+                <h5 class="mt-4 mb-3">Other Details</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-check mb-3">
+                            {{ form.is_playing_xi }}
+                            <label class="form-check-label" for="id_is_playing_xi">
+                                Playing XI
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-3">
+                            {{ form.is_captain }}
+                            <label class="form-check-label" for="id_is_captain">
+                                Captain
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check mb-3">
+                            {{ form.is_keeper }}
+                            <label class="form-check-label" for="id_is_keeper">
+                                Wicket Keeper
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_comments">Comments</label>
+                    {{ form.comments|add_class:"form-control" }}
+                </div>
+                
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a href="{% url 'cricket_stats:match_detail' match_id=match.id %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for all select elements
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+</script>
+{% endblock %}

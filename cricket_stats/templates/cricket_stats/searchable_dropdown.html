@@ -1,0 +1,64 @@
+{% load static %}
+
+<div class="form-group">
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    <select name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control searchable-dropdown" data-search-url="{{ search_url }}" {% if field.required %}required{% endif %}>
+        {% if field.value %}
+            {% for option in field.field.choices %}
+                {% if option.0 == field.value %}
+                    <option value="{{ option.0 }}" selected>{{ option.1 }}</option>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <option value="">---------</option>
+        {% endif %}
+    </select>
+    {% if field.help_text %}
+        <small class="form-text text-muted">{{ field.help_text }}</small>
+    {% endif %}
+    {% if field.errors %}
+        <div class="invalid-feedback">
+            {% for error in field.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('.searchable-dropdown').each(function() {
+            var $select = $(this);
+            var searchUrl = $select.data('search-url');
+            
+            $select.select2({
+                theme: 'bootstrap4',
+                placeholder: 'Search...',
+                allowClear: true,
+                minimumInputLength: 0,
+                ajax: {
+                    url: searchUrl,
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        return {
+                            results: data.results,
+                            pagination: {
+                                more: false
+                            }
+                        };
+                    },
+                    cache: true
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

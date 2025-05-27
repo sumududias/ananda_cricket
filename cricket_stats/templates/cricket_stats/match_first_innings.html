@@ -1,0 +1,152 @@
+{% extends 'cricket_stats/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ match.name|default:match.opponent }} - First Innings</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Match Details</h5>
+                <a href="{{ request.path }}?print=1" target="_blank" class="btn btn-sm btn-light">
+                    <i class="fas fa-print"></i> Print Scorecard
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Date:</strong> {{ match.match_date }}</p>
+                    <p><strong>Venue:</strong> {{ match.venue }}</p>
+                    <p><strong>Format:</strong> {{ match.format.name|default:"Unknown" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Teams:</strong> {{ match.team_name|default:match.college_name }} vs {{ match.opponent }}</p>
+                    <p><strong>Toss:</strong> {{ match.toss_winner }} won and elected to {{ match.toss_decision }}</p>
+                    <p><strong>Result:</strong> {{ match.result }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Batting Scorecard</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Batsman</th>
+                            <th>How Out</th>
+                            <th>Bowler</th>
+                            <th>Fielder</th>
+                            <th>Runs</th>
+                            <th>Balls</th>
+                            <th>4s</th>
+                            <th>6s</th>
+                            <th>SR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in batting_scorecard %}
+                        <tr>
+                            <td>
+                                {{ player.player.first_name }} {{ player.player.last_name }}
+                                {% if player.is_captain %}<span class="badge bg-primary">C</span>{% endif %}
+                                {% if player.is_keeper %}<span class="badge bg-info">WK</span>{% endif %}
+                            </td>
+                            <td>{{ player.how_out|default:"not out" }}</td>
+                            <td>{{ player.bowler.first_name|default:"" }} {{ player.bowler.last_name|default:"" }}</td>
+                            <td>{{ player.fielder.first_name|default:"" }} {{ player.fielder.last_name|default:"" }}</td>
+                            <td>{{ player.runs_scored }}</td>
+                            <td>{{ player.balls_faced }}</td>
+                            <td>{{ player.fours }}</td>
+                            <td>{{ player.sixes }}</td>
+                            <td>
+                                {% if player.balls_faced > 0 %}
+                                    {{ player.runs_scored|floatformat:0|default:0|stringformat:"d"|add:"0"|mul:100|div:player.balls_faced|floatformat:2 }}
+                                {% else %}
+                                    0.00
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center">No batting data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-dark">
+                            <td colspan="4"><strong>Extras</strong></td>
+                            <td colspan="5">
+                                <strong>Total: {{ extras.wides|add:extras.no_balls|add:extras.byes|add:extras.leg_byes }}</strong>
+                                (w: {{ extras.wides }}, nb: {{ extras.no_balls }}, b: {{ extras.byes }}, lb: {{ extras.leg_byes }})
+                            </td>
+                        </tr>
+                        <tr class="table-dark">
+                            <td colspan="4"><strong>Total</strong></td>
+                            <td colspan="5"><strong>{{ innings_total }} runs</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Bowling Figures</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Bowler</th>
+                            <th>Overs</th>
+                            <th>Maidens</th>
+                            <th>Runs</th>
+                            <th>Wickets</th>
+                            <th>Economy</th>
+                            <th>Wides</th>
+                            <th>No Balls</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in bowling_figures %}
+                        <tr>
+                            <td>{{ player.player.first_name }} {{ player.player.last_name }}</td>
+                            <td>{{ player.overs_bowled }}</td>
+                            <td>{{ player.maidens_bowled }}</td>
+                            <td>{{ player.runs_conceded }}</td>
+                            <td>{{ player.wickets_taken }}</td>
+                            <td>
+                                {% if player.overs_bowled > 0 %}
+                                    {{ player.runs_conceded|div:player.overs_bowled|floatformat:2 }}
+                                {% else %}
+                                    0.00
+                                {% endif %}
+                            </td>
+                            <td>{{ player.wides }}</td>
+                            <td>{{ player.no_balls }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">No bowling data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="d-flex justify-content-between mb-4">
+        <a href="{% url 'cricket_stats:match_totals' match.id %}" class="btn btn-primary">Match Summary</a>
+        <a href="{% url 'cricket_stats:match_second_innings' match.id %}" class="btn btn-success">Second Innings</a>
+    </div>
+</div>
+{% endblock %}

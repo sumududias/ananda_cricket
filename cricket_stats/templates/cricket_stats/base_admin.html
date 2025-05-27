@@ -1,0 +1,34 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    #content {
+        padding: 20px;
+    }
+    .cricket-content {
+        background: white;
+        padding: 20px;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .breadcrumbs {
+        padding: 10px 20px;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a> ›
+    <a href="{% url 'cricket_stats:player_list' %}">Players</a> ›
+    {% block breadcrumb_current %}{% endblock %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="cricket-content">
+    {% block cricket_content %}{% endblock %}
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "admin/index.html" %}
+{% load i18n static %}
+
+{% block content %}
+    <div class="backup-button-container" style="margin-bottom: 20px; text-align: right;">
+        <a href="{% url 'cricket_admin:backup_database' %}" class="button" style="display: inline-block; padding: 10px 15px; background-color: #417690; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+            <i class="fas fa-database" style="margin-right: 5px;"></i> Backup Database
+        </a>
+    </div>
+    {{ block.super }}
+{% endblock %}

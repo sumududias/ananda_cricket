@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="player-header">
+    <h1>{{ player.name }}</h1>
+    
+    <!-- Year and Format Filters -->
+    <div class="filters">
+        <form method="get">
+            <select name="year" onchange="this.form.submit()">
+                <option value="">All Years</option>
+                {% for y in years %}
+                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+            
+            <select name="format" onchange="this.form.submit()">
+                <option value="">All Formats</option>
+                {% for fmt in formats %}
+                <option value="{{ fmt.id }}" {% if fmt.id == selected_format %}selected{% endif %}>
+                    {{ fmt.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+</div>
+
+<!-- Overall Statistics -->
+<div class="stats-section">
+    <h2>Overall Statistics</h2>
+    <table class="stats-table">
+        <tr>
+            <th>Category</th>
+            <th>Matches</th>
+            <th>Runs</th>
+            <th>Wickets</th>
+            <th>Catches</th>
+            <th>Stumpings</th>
+        </tr>
+        <tr>
+            <td>Overall</td>
+            <td>{{ overall_stats.batting.total_innings }}</td>
+            <td>{{ overall_stats.batting.total_runs|default:"0" }}</td>
+            <td>{{ overall_stats.bowling.total_wickets|default:"0" }}</td>
+            <td>{{ overall_stats.fielding.total_catches|default:"0" }}</td>
+            <td>{{ overall_stats.fielding.total_stumpings|default:"0" }}</td>
+        </tr>
+    </table>
+</div>
+
+<!-- Format-wise Statistics -->
+{% for stats in format_stats %}
+<div class="stats-section">
+    <h3>{{ stats.format.name }} Statistics</h3>
+    <table class="stats-table">
+        <tr>
+            <th>Category</th>
+            <th>Matches</th>
+            <th>Runs</th>
+            <th>Wickets</th>
+            <th>Catches</th>
+        </tr>
+        <tr>
+            <td>Batting</td>
+            <td>{{ stats.batting.total_innings }}</td>
+            <td>{{ stats.batting.total_runs|default:"0" }}</td>
+            <td>-</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>Bowling</td>
+            <td>{{ stats.bowling.total_overs|default:"0" }} ov</td>
+            <td>{{ stats.bowling.total_runs_conceded|default:"0" }}</td>
+            <td>{{ stats.bowling.total_wickets|default:"0" }}</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>Fielding</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>{{ stats.fielding.total_catches|default:"0" }}</td>
+        </tr>
+    </table>
+</div>
+{% endfor %}
+{% endblock %}

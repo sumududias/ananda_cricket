@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Ananda Cricket</title>
+    
+    <style>
+        /* General styles */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .report-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #333;
+        }
+        
+        .report-header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .report-header .college-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .report-header .report-date {
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        
+        .report-footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #ccc;
+            font-size: 12px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .section-title {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+        
+        .summary-box {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        .summary-item {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .summary-label {
+            font-weight: bold;
+        }
+        
+        .print-button {
+            display: none; /* Hide in print mode */
+        }
+        
+        /* Print-specific styles */
+        @media print {
+            body {
+                padding: 0;
+                font-size: 12px;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            a {
+                text-decoration: none;
+                color: #333;
+            }
+            
+            .page-break {
+                page-break-before: always;
+            }
+            
+            table {
+                page-break-inside: avoid;
+            }
+            
+            tr {
+                page-break-inside: avoid;
+            }
+            
+            thead {
+                display: table-header-group;
+            }
+            
+            .report-header {
+                position: running(header);
+            }
+            
+            .report-footer {
+                position: running(footer);
+            }
+            
+            @page {
+                size: A4;
+                margin: 2cm;
+                @top-center { content: element(header) }
+                @bottom-center { content: element(footer) }
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-header">
+        <div class="college-name">Ananda College Cricket</div>
+        <h1>{{ title }}</h1>
+        <div class="report-date">Generated on: {% now "F j, Y H:i" %}</div>
+    </div>
+    
+    {% if not print_mode %}
+    <div class="no-print" style="text-align: right; margin-bottom: 20px;">
+        <a href="{{ request.path }}?{{ request.GET.urlencode }}&print=1" target="_blank" class="print-button" style="padding: 8px 16px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px;">
+            <i class="fas fa-print"></i> Print Report
+        </a>
+    </div>
+    {% endif %}
+    
+    <div class="report-content">
+        {% block report_content %}
+        {% endblock %}
+    </div>
+    
+    <div class="report-footer">
+        <p>© {% now "Y" %} Ananda College Cricket. All rights reserved.</p>
+        <p>Report generated from the Ananda Cricket Management System</p>
+    </div>
+    
+    {% if print_mode %}
+    <script>
+        // Auto-print when in print mode
+        window.onload = function() {
+            window.print();
+        }
+    </script>
+    {% endif %}
+</body>
+</html>

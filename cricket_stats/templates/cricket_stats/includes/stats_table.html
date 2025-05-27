@@ -1,0 +1,92 @@
+<!-- Batting Stats -->
+<h5>Batting</h5>
+<div class="table-responsive">
+    <table class="table table-sm stats-table">
+        <thead>
+            <tr>
+                <th>Matches</th>
+                <th>Innings</th>
+                <th>Runs</th>
+                <th>Average</th>
+                <th>Strike Rate</th>
+                <th>100s</th>
+                <th>50s</th>
+                <th>4s</th>
+                <th>6s</th>
+                <th>Highest</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ stats.batting.matches|default:0 }}</td>
+                <td>{{ stats.batting.innings|default:0 }}</td>
+                <td>{{ stats.batting.runs|default:0 }}</td>
+                <td>{{ stats.batting.average|default:0|floatformat:2 }}</td>
+                <td>{{ stats.batting.strike_rate|default:0|floatformat:2 }}</td>
+                <td>{{ stats.batting.hundreds|default:0 }}</td>
+                <td>{{ stats.batting.fifties|default:0 }}</td>
+                <td>{{ stats.batting.fours|default:0 }}</td>
+                <td>{{ stats.batting.sixes|default:0 }}</td>
+                <td>{{ stats.batting.highest_score|default:0 }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Bowling Stats -->
+<h5 class="mt-4">Bowling</h5>
+<div class="table-responsive">
+    <table class="table table-sm stats-table">
+        <thead>
+            <tr>
+                <th>Wickets</th>
+                <th>Overs</th>
+                <th>Maidens</th>
+                <th>Runs</th>
+                <th>Average</th>
+                <th>Economy</th>
+                <th>Strike Rate</th>
+                <th>Wides</th>
+                <th>No Balls</th>
+                <th>5W</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ stats.bowling.wickets|default:0 }}</td>
+                <td>{{ stats.bowling.overs|default:0|floatformat:1 }}</td>
+                <td>{{ stats.bowling.maidens|default:0 }}</td>
+                <td>{{ stats.bowling.runs_conceded|default:0 }}</td>
+                <td>{{ stats.bowling.average|default:0|floatformat:2 }}</td>
+                <td>{{ stats.bowling.economy|default:0|floatformat:2 }}</td>
+                <td>{{ stats.bowling.strike_rate|default:0|floatformat:2 }}</td>
+                <td>{{ stats.bowling.wides|default:0 }}</td>
+                <td>{{ stats.bowling.no_balls|default:0 }}</td>
+                <td>{{ stats.bowling.five_wickets|default:0 }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Fielding Stats -->
+<h5 class="mt-4">Fielding</h5>
+<div class="table-responsive">
+    <table class="table table-sm stats-table">
+        <thead>
+            <tr>
+                <th>Catches</th>
+                <th>Stumpings</th>
+                <th>Run Outs</th>
+                <th>Total Dismissals</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ stats.fielding.catches|default:0 }}</td>
+                <td>{{ stats.fielding.stumpings|default:0 }}</td>
+                <td>{{ stats.fielding.runouts|default:0 }}</td>
+                <td>{{ stats.fielding.total_dismissals|default:0 }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

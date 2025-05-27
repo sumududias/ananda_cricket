@@ -1,0 +1,26 @@
+<div class="bottom-nav">
+    <div class="nav-item">
+        <a class="nav-link" href="{% url 'admin:index' %}">
+            <i class="bi bi-house-door"></i>
+            <span>Home</span>
+        </a>
+    </div>
+    <div class="nav-item">
+        <a class="nav-link" href="{% url 'admin:cricket_stats_player_changelist' %}">
+            <i class="bi bi-person"></i>
+            <span>Players</span>
+        </a>
+    </div>
+    <div class="nav-item">
+        <a class="nav-link" href="{% url 'admin:cricket_stats_match_changelist' %}">
+            <i class="bi bi-calendar3"></i>
+            <span>Matches</span>
+        </a>
+    </div>
+    <div class="nav-item">
+        <a class="nav-link" href="{% url 'admin:cricket_stats_matchplayer_changelist' %}">
+            <i class="bi bi-stats"></i>
+            <span>Stats</span>
+        </a>
+    </div>
+</div>

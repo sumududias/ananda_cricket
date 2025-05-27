@@ -1,0 +1,52 @@
+/* Custom CSS for Django Admin */
+
+/* Make the inline header row sticky */
+.inline-group .tabular tr.add-row {
+    position: sticky;
+    bottom: 0;
+    background-color: #f8f8f8;
+    z-index: 1000;
+}
+
+.inline-group .tabular thead tr {
+    position: sticky;
+    top: 0;
+    background-color: #f8f8f8;
+    z-index: 1000;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Add some shadow to indicate it's fixed */
+.inline-group .tabular thead tr:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background-color: #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure the inline container has proper overflow settings */
+.inline-group .tabular {
+    overflow: visible;
+}
+
+/* Add some padding to the top of the form to prevent header overlap */
+.inline-related h3 {
+    margin-top: 10px;
+}
+
+/* Improve visibility of the header text */
+.inline-group .tabular thead th {
+    font-weight: bold;
+    padding: 8px;
+    color: #333;
+}
+
+/* Set a max height for the inline group to ensure scrolling */
+.inline-group {
+    max-height: 70vh;
+    overflow-y: auto;
+}

@@ -1,0 +1,98 @@
+{% extends "cricket_stats/print_base.html" %}
+{% load static %}
+
+{% block title %}{{ profile.player_info.name }} - Player Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Player Information</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="card-img-wrapper mb-3">
+                        {% if profile.player_info.photo %}
+                            <img src="{{ profile.player_info.photo.url }}" alt="{{ profile.player_info.name }}" class="img-fluid mb-3">
+                        {% else %}
+                            <img src="{% static 'cricket_stats/images/default_player.png' %}" alt="{{ profile.player_info.name }}" class="img-fluid mb-3">
+                        {% endif %}
+                    </div>
+                    <h3>{{ profile.player_info.name }}</h3>
+                    <p class="text-muted">{{ profile.player_info.role }}</p>
+                    
+                    <ul class="list-group list-group-flush mt-3">
+                        <li class="list-group-item"><strong>Jersey Number:</strong> {{ profile.player_info.jersey_number|default:"N/A" }}</li>
+                        <li class="list-group-item"><strong>Batting Style:</strong> {{ profile.player_info.batting_style }}</li>
+                        <li class="list-group-item"><strong>Bowling Style:</strong> {{ profile.player_info.bowling_style|default:"N/A" }}</li>
+                        <li class="list-group-item"><strong>Class:</strong> {{ profile.player_info.player_class }}</li>
+                        <li class="list-group-item"><strong>Year Joined:</strong> {{ profile.player_info.year_joined }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Career Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="stat-card">
+                                <h5>Overall Batting</h5>
+                                <table class="table stats-table">
+                                    <tr><td>Matches</td><td>{{ profile.overall_stats.batting.matches }}</td></tr>
+                                    <tr><td>Runs</td><td>{{ profile.overall_stats.batting.runs }}</td></tr>
+                                    <tr><td>Fours</td><td>{{ profile.overall_stats.batting.fours }}</td></tr>
+                                    <tr><td>Sixes</td><td>{{ profile.overall_stats.batting.sixes }}</td></tr>
+                                    <tr><td>Highest Score</td><td>{{ profile.overall_stats.batting.highest_score }}</td></tr>
+                                    <tr><td>Average</td><td>{{ profile.overall_stats.batting.average|floatformat:2 }}</td></tr>
+                                    <tr><td>Strike Rate</td><td>{{ profile.overall_stats.batting.strike_rate|floatformat:2 }}</td></tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="stat-card">
+                                <h5>Overall Bowling</h5>
+                                <table class="table stats-table">
+                                    <tr><td>Wickets</td><td>{{ profile.overall_stats.bowling.wickets }}</td></tr>
+                                    <tr><td>Maidens</td><td>{{ profile.overall_stats.bowling.maidens }}</td></tr>
+                                    <tr><td>Wide Balls</td><td>{{ profile.overall_stats.bowling.wides }}</td></tr>
+                                    <tr><td>No Balls</td><td>{{ profile.overall_stats.bowling.no_balls }}</td></tr>
+                                    <tr><td>Best Figures</td><td>{{ profile.overall_stats.bowling.best_figures }}</td></tr>
+                                    <tr><td>Economy</td><td>{{ profile.overall_stats.bowling.economy|floatformat:2 }}</td></tr>
+                                    <tr><td>Average</td><td>{{ profile.overall_stats.bowling.average|floatformat:2 }}</td></tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="stat-card">
+                                <h5>Fielding Statistics</h5>
+                                <table class="table stats-table">
+                                    <tr>
+                                        <td>Catches</td>
+                                        <td>{{ profile.fielding_stats.catches|default:"0" }}</td>
+                                        <td>Stumpings</td>
+                                        <td>{{ profile.fielding_stats.stumpings|default:"0" }}</td>
+                                        <td>Run Outs</td>
+                                        <td>{{ profile.fielding_stats.run_outs|default:"0" }}</td>
+                                        <td>Dropped Catches</td>
+                                        <td>{{ profile.fielding_stats.dropped_catches|default:"0" }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

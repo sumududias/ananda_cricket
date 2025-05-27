@@ -1,0 +1,245 @@
+{% extends 'cricket_stats/reports_base.html' %}
+{% load static %}
+
+{% block report_title %}Attendance Report{% endblock %}
+{% block report_heading %}{{ title }}{% endblock %}
+
+{% block report_style %}
+<style>
+    .attendance-card {
+        margin-bottom: 20px;
+        border-radius: 8px;
+    }
+    .attendance-table {
+        width: 100%;
+    }
+    .print-btn {
+        margin-bottom: 15px;
+    }
+    .status-present {
+        color: #28a745;
+        font-weight: bold;
+    }
+    .status-absent {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .status-excused {
+        color: #ffc107;
+        font-weight: bold;
+    }
+    .status-late {
+        color: #fd7e14;
+        font-weight: bold;
+    }
+    .progress {
+        height: 20px;
+        margin-bottom: 10px;
+        background-color: #f5f5f5;
+    }
+    .progress-bar-present {
+        background-color: #28a745 !important;
+    }
+    .progress-bar-late {
+        background-color: #fd7e14 !important;
+    }
+    .progress-bar-excused {
+        background-color: #ffc107 !important;
+    }
+    .progress-bar-absent {
+        background-color: #dc3545 !important;
+    }
+    .attendance-header {
+        background-color: var(--admin-primary);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 4px 4px 0 0;
+    }
+    .attendance-body {
+        background-color: #fff;
+        padding: 15px;
+        border: 1px solid #eee;
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+    }
+    .attendance-section {
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block report_actions %}
+<a href="{% url 'cricket_stats:attendance_report' %}?{{ request.GET.urlencode }}&print=1" class="btn btn-primary print-btn" target="_blank">
+    <i class="bi bi-printer"></i> Print Report
+</a>
+{% endblock %}
+
+{% block report_content %}
+<!-- Filter Section -->
+<div class="filter-section">
+    <form method="get" class="row g-3">
+        <div class="col-md-3">
+            <label for="start_date" class="form-label">Start Date</label>
+            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+        </div>
+        <div class="col-md-3">
+            <label for="end_date" class="form-label">End Date</label>
+            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+        </div>
+        <div class="col-md-3">
+            <label for="age_group" class="form-label">Age Group</label>
+            <select class="form-select" id="age_group" name="age_group">
+                <option value="">All Age Groups</option>
+                {% for age in age_groups %}
+                <option value="{{ age }}" {% if age == selected_age_group %}selected{% endif %}>{{ age }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="player_class" class="form-label">Player Class</label>
+            <select class="form-select" id="player_class" name="player_class">
+                <option value="">All Classes</option>
+                {% for class in player_classes %}
+                <option value="{{ class }}" {% if class == selected_player_class %}selected{% endif %}>{{ class }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-success">Apply Filters</button>
+            <a href="{% url 'cricket_stats:attendance_report' %}" class="btn btn-secondary">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- Player Attendance Analysis -->
+<div class="attendance-section">
+    <div class="attendance-header">
+        <h4 class="mb-0">Player Attendance Analysis</h4>
+    </div>
+    <div class="attendance-body">
+        <div class="table-responsive">
+            <table class="table table-striped attendance-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                        <th>Excused</th>
+                        <th>Late</th>
+                        <th>Attendance Rate</th>
+                        <th>Attendance Analysis</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player_id, player_data in report_data.items %}
+                        <tr>
+                            <td>{{ player_data.name }}</td>
+                            <td class="status-present">{{ player_data.present|default:"0" }}</td>
+                            <td class="status-absent">{{ player_data.absent|default:"0" }}</td>
+                            <td class="status-excused">{{ player_data.excused|default:"0" }}</td>
+                            <td class="status-late">{{ player_data.late|default:"0" }}</td>
+                            <td>
+                                {% if player_data.attendance_rate %}
+                                    {{ player_data.attendance_rate|floatformat:1 }}%
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td style="width: 25%">
+                                {% with total=player_data.present|add:player_data.absent|add:player_data.excused|add:player_data.late %}
+                                    {% if total > 0 %}
+                                        <div class="progress">
+                                            {% if player_data.present > 0 %}
+                                                <div class="progress-bar bg-success" role="progressbar" 
+                                                     style="width: {% widthratio player_data.present total 100 %}%"
+                                                     aria-valuenow="{% widthratio player_data.present total 100 %}" 
+                                                     aria-valuemin="0" aria-valuemax="100">
+                                                    {{ player_data.present }}
+                                                </div>
+                                            {% endif %}
+                                            
+                                            {% if player_data.late > 0 %}
+                                                <div class="progress-bar bg-warning" role="progressbar" 
+                                                     style="width: {% widthratio player_data.late total 100 %}%"
+                                                     aria-valuenow="{% widthratio player_data.late total 100 %}" 
+                                                     aria-valuemin="0" aria-valuemax="100">
+                                                    {{ player_data.late }}
+                                                </div>
+                                            {% endif %}
+                                            
+                                            {% if player_data.excused > 0 %}
+                                                <div class="progress-bar bg-info" role="progressbar" 
+                                                     style="width: {% widthratio player_data.excused total 100 %}%"
+                                                     aria-valuenow="{% widthratio player_data.excused total 100 %}" 
+                                                     aria-valuemin="0" aria-valuemax="100">
+                                                    {{ player_data.excused }}
+                                                </div>
+                                            {% endif %}
+                                            
+                                            {% if player_data.absent > 0 %}
+                                                <div class="progress-bar bg-danger" role="progressbar" 
+                                                     style="width: {% widthratio player_data.absent total 100 %}%"
+                                                     aria-valuenow="{% widthratio player_data.absent total 100 %}" 
+                                                     aria-valuemin="0" aria-valuemax="100">
+                                                    {{ player_data.absent }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <div class="text-muted">No attendance data</div>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">No attendance data found matching the current filters.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Training Sessions Analysis -->
+<div class="attendance-section">
+    <div class="attendance-header">
+        <h4 class="mb-0">Training Sessions Analysis</h4>
+    </div>
+    <div class="attendance-body">
+        <div class="table-responsive">
+            <table class="table table-striped attendance-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Session Type</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                        <th>Excused</th>
+                        <th>Late</th>
+                        <th>Attendance Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in session_data %}
+                        <tr>
+                            <td>{{ session.date|date:"M d, Y" }}</td>
+                            <td>{{ session.session_type }}</td>
+                            <td class="status-present">{{ session.present }}</td>
+                            <td class="status-absent">{{ session.absent }}</td>
+                            <td class="status-excused">{{ session.excused }}</td>
+                            <td class="status-late">{{ session.late }}</td>
+                            <td>{{ session.attendance_rate|floatformat:1 }}%</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">No training sessions found matching the current filters.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

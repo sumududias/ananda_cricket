@@ -1,0 +1,228 @@
+/* Admin Theme Colors for Reports */
+:root {
+    --admin-primary: #417690;
+    --admin-primary-dark: #205067;
+    --admin-secondary: #79aec8;
+    --admin-accent: #f5dd5d;
+    --admin-link: #447e9b;
+    --admin-link-hover: #036;
+    --background-color: #f8f8f8;
+    --text-color: #333;
+    --border-color: #ddd;
+}
+
+/* Base Styles */
+body {
+    font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-color);
+    background-color: var(--background-color);
+}
+
+/* Card Styles */
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    background-color: var(--admin-primary) !important;
+    color: white !important;
+    font-weight: 500;
+    padding: 1rem;
+    border-bottom: none;
+}
+
+.card-header h5 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white !important;
+}
+
+.card-body {
+    padding: 1.5rem;
+    background-color: #ffffff;
+}
+
+.card-body p {
+    color: var(--text-color);
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* Button Styles */
+.btn-report, .btn-primary {
+    background-color: var(--admin-primary);
+    color: white !important;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: background-color 0.3s;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.btn-report:hover, .btn-primary:hover {
+    background-color: var(--admin-primary-dark);
+    color: white !important;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white !important;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    color: white !important;
+}
+
+/* Table Styles */
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+
+.table th {
+    background-color: var(--admin-primary);
+    color: white;
+    padding: 12px;
+    font-weight: 500;
+}
+
+.table td {
+    padding: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Report Title Styles */
+.report-title {
+    color: var(--admin-primary);
+    font-weight: 600;
+    font-size: 2.2rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--admin-primary);
+    padding-bottom: 0.5rem;
+}
+
+/* Fix for dropdown alignment */
+select.form-select {
+    height: 38px;
+    text-align: center;
+    text-align-last: center;
+    padding-right: 25px;
+    appearance: menulist; /* Use native dropdown appearance */
+}
+
+select.form-select option {
+    text-align: center;
+}
+
+/* Icon Styles */
+.report-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--admin-primary);
+}
+
+/* GLOBAL DARK MODE FIX - ENSURE ALL TEXT IS VISIBLE */
+@media (prefers-color-scheme: dark) {
+    /* Override all text colors to be white */
+    body * {
+        color: white !important;
+    }
+    
+    /* Exceptions for specific elements */
+    .card-header, .btn-primary, .btn-secondary, .btn-report {
+        color: white !important;
+    }
+    
+    h5, h4, h3, h2, h1, .nav-tabs .nav-link.active {
+        color: #79aec8 !important;
+    }
+    
+    /* Dark backgrounds */
+    body {
+        background-color: #2a2a2a !important;
+    }
+    
+    .card, .card-body, .list-group-item, 
+    .tab-content, .tab-pane, .table, .table td, .table th {
+        background-color: #333 !important;
+        border-color: #444 !important;
+    }
+    
+    /* Form elements */
+    input, select, textarea {
+        background-color: #444 !important;
+        color: white !important;
+        border-color: #555 !important;
+    }
+    
+    /* Links */
+    a {
+        color: #79aec8 !important;
+    }
+    
+    a:hover {
+        color: #a3c8e2 !important;
+    }
+    
+    /* Fix Bootstrap classes */
+    .text-muted {
+        color: #e0e0e0 !important;
+    }
+    
+    /* Table rows */
+    .table tr:nth-child(even) {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 10px;
+    }
+    
+    .report-title {
+        font-size: 1.5rem;
+    }
+    
+    .card-header h5 {
+        font-size: 1rem;
+    }
+    
+    .table th, .table td {
+        padding: 6px 8px;
+        font-size: 0.85rem;
+    }
+}

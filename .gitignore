@@ -1,0 +1,36 @@
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.env.local
+db.sqlite3
+
+# Django
+*.log
+local_settings.py
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Backups
+backups/
+*.sql
+*.zip
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Flutter app (separate repository)
+ananda_cricket_app_new/

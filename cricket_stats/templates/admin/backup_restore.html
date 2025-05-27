@@ -1,0 +1,220 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .backup-section, .restore-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+  }
+  .backup-button, .restore-button {
+    display: inline-block;
+    padding: 10px 15px;
+    background-color: #417690;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    margin-right: 10px;
+    border: none;
+    cursor: pointer;
+  }
+  .restore-button {
+    background-color: #79aec8;
+  }
+  .backup-list {
+    margin-top: 20px;
+    border-collapse: collapse;
+    width: 100%;
+  }
+  .backup-list th, .backup-list td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  .backup-list th {
+    background-color: #417690;
+    color: white;
+  }
+  .backup-list tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  .backup-list tr:hover {
+    background-color: #ddd;
+  }
+  .message {
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+  }
+  .success {
+    background-color: #dff0d8;
+    border: 1px solid #d6e9c6;
+    color: #3c763d;
+  }
+  .error {
+    background-color: #f2dede;
+    border: 1px solid #ebccd1;
+    color: #a94442;
+  }
+  .info {
+    background-color: #d9edf7;
+    border: 1px solid #bce8f1;
+    color: #31708f;
+  }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans "Home" %}</a> &rsaquo;
+  {% trans "Backup & Restore" %}
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>{% trans "Backup & Restore" %}</h1>
+
+{% if message %}
+<div class="message {{ message_type }}">
+  {{ message }}
+</div>
+{% endif %}
+
+<div class="backup-section">
+  <h2>{% trans "Create Backup" %}</h2>
+  <p>{% trans "Create a backup of your database, media files, or the entire system." %}</p>
+  
+  <form method="post" action="">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="backup">
+    
+    <div style="margin-bottom: 15px;">
+      <label for="backup_type">{% trans "Backup Type:" %}</label>
+      <select name="backup_type" id="backup_type">
+        <option value="full">{% trans "Full System (Database + Media + Code)" %}</option>
+        <option value="db">{% trans "Database Only" %}</option>
+        <option value="media">{% trans "Media Files Only" %}</option>
+        <option value="code">{% trans "Code Only" %}</option>
+      </select>
+    </div>
+    
+    <button type="submit" class="backup-button">
+      <i class="fas fa-download"></i> {% trans "Create Backup" %}
+    </button>
+  </form>
+</div>
+
+<div class="restore-section">
+  <h2>{% trans "Restore from Backup" %}</h2>
+  
+  {% if backups %}
+    <form method="post" action="">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="restore">
+      
+      {% if db_backups %}
+      <h3>{% trans "Database Backups" %}</h3>
+      <table class="backup-list">
+        <thead>
+          <tr>
+            <th>{% trans "Select" %}</th>
+            <th>{% trans "Filename" %}</th>
+            <th>{% trans "Size" %}</th>
+            <th>{% trans "Date" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for backup in db_backups %}
+          <tr>
+            <td><input type="radio" name="db_backup" value="{{ backup.path }}"></td>
+            <td>{{ backup.name }}</td>
+            <td>{{ backup.size }} MB</td>
+            <td>{{ backup.date }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+      
+      {% if media_backups %}
+      <h3>{% trans "Media Backups" %}</h3>
+      <table class="backup-list">
+        <thead>
+          <tr>
+            <th>{% trans "Select" %}</th>
+            <th>{% trans "Filename" %}</th>
+            <th>{% trans "Size" %}</th>
+            <th>{% trans "Date" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for backup in media_backups %}
+          <tr>
+            <td><input type="radio" name="media_backup" value="{{ backup.path }}"></td>
+            <td>{{ backup.name }}</td>
+            <td>{{ backup.size }} MB</td>
+            <td>{{ backup.date }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+      
+      {% if code_backups %}
+      <h3>{% trans "Code Backups" %}</h3>
+      <table class="backup-list">
+        <thead>
+          <tr>
+            <th>{% trans "Select" %}</th>
+            <th>{% trans "Filename" %}</th>
+            <th>{% trans "Size" %}</th>
+            <th>{% trans "Date" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for backup in code_backups %}
+          <tr>
+            <td><input type="radio" name="code_backup" value="{{ backup.path }}"></td>
+            <td>{{ backup.name }}</td>
+            <td>{{ backup.size }} MB</td>
+            <td>{{ backup.date }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+      
+      <div style="margin-top: 20px;">
+        <button type="submit" class="restore-button" onclick="return confirm('Are you sure you want to restore from the selected backups? This cannot be undone.')">
+          <i class="fas fa-upload"></i> {% trans "Restore Selected Backups" %}
+        </button>
+      </div>
+    </form>
+  {% else %}
+    <p>{% trans "No backups found. Create a backup first." %}</p>
+  {% endif %}
+</div>
+
+<div class="backup-section">
+  <h2>{% trans "Manage Backups" %}</h2>
+  
+  <form method="post" action="">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="cleanup">
+    
+    <div style="margin-bottom: 15px;">
+      <label for="days">{% trans "Remove backups older than:" %}</label>
+      <input type="number" name="days" id="days" value="30" min="1" style="width: 60px;"> {% trans "days" %}
+    </div>
+    
+    <button type="submit" class="backup-button" onclick="return confirm('Are you sure you want to delete old backups? This cannot be undone.')">
+      <i class="fas fa-trash"></i> {% trans "Clean Up Old Backups" %}
+    </button>
+  </form>
+</div>
+{% endblock %}

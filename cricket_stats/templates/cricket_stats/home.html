@@ -1,0 +1,44 @@
+{% extends "cricket_stats/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto text-center">
+            <h1 class="display-4 mb-4">Welcome to Ananda Cricket</h1>
+            <p class="lead mb-4">Track cricket statistics, player profiles, and match details.</p>
+            
+            <div class="row mt-5">
+                <div class="col-md-4">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Players</h5>
+                            <p class="card-text">View player profiles, statistics, and career highlights.</p>
+                            <a href="{% url 'cricket_stats:player_list' %}" class="btn btn-primary">View Players</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Matches</h5>
+                            <p class="card-text">Browse match schedules, results, and detailed scorecards.</p>
+                            <a href="{% url 'cricket_stats:match_list' %}" class="btn btn-primary">View Matches</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card mb-4" style="background-color: #417690; color: white;">
+                        <div class="card-body">
+                            <h5 class="card-title">Reports Dashboard</h5>
+                            <p class="card-text">Access comprehensive reports, statistics, and match scorecards.</p>
+                            <a href="{% url 'cricket_stats:reports_dashboard' %}" class="btn btn-light">View Reports</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

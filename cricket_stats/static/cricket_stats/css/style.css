@@ -1,0 +1,448 @@
+/* Theme variables */
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --background-color: #f8f9fa;
+    --card-background: #ffffff;
+    --text-color: #212529;
+    --border-color: #dee2e6;
+    --header-bg: #f8f9fa;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+    --primary-color: #0d6efd;
+    --secondary-color: #adb5bd;
+    --background-color: #212529;
+    --card-background: #343a40;
+    --text-color: #f8f9fa;
+    --border-color: #495057;
+    --header-bg: #343a40;
+}
+
+/* Base styles */
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+main {
+    padding: 2rem 0;
+}
+
+/* Card styles */
+.card {
+    background-color: var(--card-background);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.card-body {
+    color: var(--text-color);
+}
+
+/* Table styles */
+.table {
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+.table-sm th {
+    font-weight: 600;
+    background-color: var(--header-bg);
+}
+
+.table-sm td, .table-sm th {
+    padding: 0.5rem;
+    text-align: center;
+    border-color: var(--border-color);
+}
+
+/* Tab styles */
+.nav-tabs {
+    border-bottom: 2px solid var(--border-color);
+}
+
+.nav-tabs .nav-link {
+    color: var(--text-color);
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+/* Player profile specific */
+.player-photo {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.card-img-top {
+    width: 100%;
+    height: 300px;
+    object-fit: contain;
+    background-color: var(--card-background);
+    padding: 1rem;
+    border-radius: 0;
+}
+
+/* Profile card styles */
+.profile-card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.profile-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Default background for missing profile images */
+.card-img-top[src*="default-player.png"] {
+    background-color: var(--card-background);
+    padding: 2rem;
+}
+
+/* Stats table */
+.stats-table {
+    font-size: 0.9rem;
+    width: 100%;
+    margin-top: 1rem;
+    background-color: var(--card-background);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.stats-table th {
+    background-color: var(--header-bg);
+    color: var(--text-color);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+}
+
+.stats-table td {
+    text-align: center;
+    padding: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.stats-table tr:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+
+[data-theme="dark"] .stats-table tr:hover {
+    background-color: rgba(255,255,255,0.05);
+}
+
+/* Responsive tables */
+@media (max-width: 768px) {
+    .table-sm {
+        font-size: 0.8rem;
+    }
+    
+    .table-sm th,
+    .table-sm td {
+        padding: 0.3rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .table-sm {
+        font-size: 0.7rem;
+    }
+    
+    .table-sm th,
+    .table-sm td {
+        padding: 0.2rem;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+}
+
+.loading .loading-spinner {
+    display: block;
+}
+
+/* Theme switcher */
+.theme-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    margin-left: 1rem;
+}
+
+.theme-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Player grid */
+.player-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.player-card {
+    background-color: var(--card-background);
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.player-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.player-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.player-name {
+    padding: 1rem;
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-color);
+    text-align: center;
+}
+
+.view-profile {
+    display: block;
+    text-align: center;
+    padding: 0.75rem;
+    background-color: var(--primary-color);
+    color: white;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.view-profile:hover {
+    background-color: #0b5ed7;
+    color: rgb(255, 255, 255);
+}
+
+/* Admin-like styles */
+.content-main {
+    padding: 2rem;
+    background-color: var(--card-background);
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 2rem auto;
+    max-width: 1200px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .player-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+    /* Move logo and search to bottom */
+    .module {
+        position: relative;
+    }
+
+    .module h2 {
+        margin-bottom: 1rem;
+    }
+
+    .module img {
+        display: none;
+    }
+
+    .searchbar {
+        display: none;
+    }
+
+    /* Add bottom navigation */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--header-bg);
+        border-top: 1px solid var(--border-color);
+        padding: 0.5rem;
+        display: flex;
+        justify-content: space-around;
+        z-index: 1000;
+    }
+
+    .bottom-nav .nav-item {
+        flex: 1;
+        text-align: center;
+        padding: 0.5rem;
+    }
+
+    .bottom-nav .nav-link {
+        display: block;
+        color: var(--text-color);
+        text-decoration: none;
+        padding: 0.5rem;
+    }
+
+    .bottom-nav .nav-link i {
+        display: block;
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .bottom-nav .nav-link span {
+        font-size: 0.875rem;
+        display: block;
+    }
+
+    /* Adjust button sizes */
+    .button {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Adjust table layout */
+    .table-responsive {
+        margin-top: 1rem;
+    }
+
+    /* Adjust card layout */
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    /* Adjust form field width */
+    .field-box {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Adjust tabs layout */
+    .nav-tabs {
+        margin-top: 1rem;
+    }
+
+    /* Adjust filter layout */
+    .changelist-filter {
+        margin-top: 1rem;
+    }
+}
+
+/* Additional mobile-specific adjustments */
+@media (max-width: 480px) {
+    /* Adjust button padding */
+    .button {
+        padding: 0.5rem;
+    }
+
+    /* Adjust header spacing */
+    .module {
+        padding: 1rem;
+    }
+}
+
+/* static/css/player_stats.css */
+.stats-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.stats-table th, .stats-table td {
+    padding: 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.stats-table th {
+    background-color: #f5f5f5;
+}
+
+.filters {
+    margin: 1rem 0;
+}
+
+.filters select {
+    padding: 0.5rem;
+    margin-right: 1rem;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}

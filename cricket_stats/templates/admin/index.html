@@ -1,0 +1,191 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/dashboard.css" %}">
+<style>
+    /* Custom styles for better mobile layout */
+    @media (max-width: 767px) {
+        #content {
+            padding: 15px 5px;
+        }
+        
+        /* Ensure proper stacking order on mobile */
+        #content-main {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Make Django banner and user tools first */
+        #header {
+            order: 1;
+        }
+        
+        /* Recent actions second */
+        .module[id^="recent-actions"] {
+            order: 2;
+            margin-bottom: 20px;
+        }
+        
+        /* App modules (including Ananda logo) third */
+        .app-cricket_stats {
+            order: 3;
+        }
+        
+        /* Make sure all modules take full width on mobile */
+        .dashboard .module {
+            width: 100% !important;
+            clear: both;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    {% if app_list %}
+        {% for app in app_list %}
+            <div class="app-{{ app.app_label }} module{% if app.app_url %} {% endif %}">
+                <table>
+                    <caption>
+                        <a href="{{ app.app_url }}" class="section" title="{% blocktranslate with name=app.name %}Models in the {{ name }} application{% endblocktranslate %}">{{ app.name }}</a>
+                    </caption>
+                    {% for model in app.models %}
+                        <tr class="model-{{ model.object_name|lower }}">
+                            {% if model.admin_url %}
+                                <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+                            {% else %}
+                                <th scope="row">{{ model.name }}</th>
+                            {% endif %}
+
+                            {% if model.add_url %}
+                                <td><a href="{{ model.add_url }}" class="addlink">{% translate 'Add' %}</a></td>
+                            {% else %}
+                                <td>{% translate 'Add' %}</td>
+                            {% endif %}
+
+                            {% if model.admin_url and show_changelinks %}
+                                {% if model.view_only %}
+                                    <td><a href="{{ model.admin_url }}" class="viewlink">{% translate 'View' %}</a></td>
+                                {% else %}
+                                    <td><a href="{{ model.admin_url }}" class="changelink">{% translate 'Change' %}</a></td>
+                                {% endif %}
+                            {% elif show_changelinks %}
+                                <td>{% if model.view_only %}{% translate 'View' %}{% else %}{% translate 'Change' %}{% endif %}</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% endfor %}
+    {% else %}
+    <p>{% translate "You do not have permission to view or edit anything." %}</p>
+    {% endif %}
+    
+    {# Right corner content #}
+    <div class="app-cricket_stats module" style="position: absolute; top: 116px; right: 212px; width: 270px;">
+        <img src="{% static 'cricket_stats/img/ananda-logo.png' %}" alt="Ananda School Logo" style="width: 100%; height: auto; margin-bottom: 20px;" onerror="this.style.display='none'">
+        
+        <div style="background: var(--darkened-bg); padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+            <h3 style="margin-top: 0; color: var(--body-fg);">Search Players</h3>
+            <form method="GET" action="{% url 'cricket_stats:player_list' %}">
+                <input type="text" name="q" placeholder="Search by name..." value="{{ request.GET.q }}" 
+                       style="width: 92%; padding: 8px; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--body-bg); color: var(--body-fg);">
+                <select name="age_group" 
+                        style="width: 100%; margin-bottom: 10px; padding: 5px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--body-bg); color: var(--body-fg);">
+                    <option value="">All Age Groups</option>
+                    <option value="U13">Under 13</option>
+                    <option value="U15">Under 15</option>
+                    <option value="U17">Under 17</option>
+                    <option value="U19">Under 19</option>
+                </select>
+                <button type="submit" 
+                        style="width: 100%; background: var(--button-bg); color: var(--button-fg); border: none; padding: 8px; border-radius: 4px; cursor: pointer;">
+                    Search
+                </button>
+            </form>
+        </div>
+
+        <a href="{% url 'cricket_stats:player_list' %}" class="button" 
+           style="width: 96%; text-align: center; display: block; margin-bottom: 10px;">
+            <i class="fas fa-users"></i> View All Players
+        </a>
+        
+        <a href="{% url 'cricket_stats:training_session_list' %}" class="button" 
+           style="width: 96%; text-align: center; display: block; margin-bottom: 10px; background-color: #417690; color: white;">
+            <i class="fas fa-clipboard-check"></i> Attendance Management
+        </a>
+        
+        <a href="{% url 'cricket_stats:reports_dashboard' %}" class="button" 
+           style="width: 96%; text-align: center; display: block; margin-bottom: 20px; background-color: #417690; color: white;">
+            <i class="fas fa-chart-bar"></i> Reports Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<div id="content-related">
+    <div class="module" id="recent-actions-module">
+        <h2>{% translate 'Recent actions' %}</h2>
+        <h3>{% translate 'My actions' %}</h3>
+        {% load log %}
+        {% get_admin_log 10 as admin_log for_user user %}
+        {% if not admin_log %}
+            <p>{% translate 'None available' %}</p>
+        {% else %}
+            <ul class="actionlist">
+                {% for entry in admin_log %}
+                <li class="{% if entry.is_addition %}addlink{% endif %}{% if entry.is_change %}changelink{% endif %}{% if entry.is_deletion %}deletelink{% endif %}">
+                    {% if entry.is_deletion or not entry.get_admin_url %}
+                        {{ entry.object_repr }}
+                    {% else %}
+                        <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+                    {% endif %}
+                    <br>
+                    {% if entry.content_type %}
+                        <span class="mini quiet">{% filter capfirst %}{{ entry.content_type.name }}{% endfilter %}</span>
+                    {% else %}
+                        <span class="mini quiet">{% translate 'Unknown content' %}</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Find all app-cricket_stats modules
+        const appModules = document.querySelectorAll('.app-cricket_stats');
+        
+        appModules.forEach(function(module) {
+            // Find all model links in this module
+            const modelLinks = module.querySelectorAll('.model');
+            
+            modelLinks.forEach(function(modelLink) {
+                // Check if this is the PlayerAttendance or TrainingSession model
+                const modelText = modelLink.textContent.trim().toLowerCase();
+                if (modelText.includes('player attendances') || 
+                    modelText.includes('training sessions') || 
+                    modelText.includes('attendance management')) {
+                    // Find the link inside this model element
+                    const link = modelLink.querySelector('a');
+                    if (link) {
+                        // Replace the link with our custom URL
+                        link.href = "{% url 'cricket_stats:training_session_list' %}";
+                    }
+                }
+            });
+        });
+    });
+</script>

@@ -1,0 +1,169 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Ananda Cricket</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .attendance-section {
+            margin-bottom: 30px;
+        }
+        .attendance-header {
+            background-color: #417690;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 4px 4px 0 0;
+        }
+        .attendance-body {
+            background-color: #fff;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+        }
+        .attendance-table th {
+            background-color: #79aec8;
+            color: white;
+        }
+        .print-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .print-header img {
+            max-height: 80px;
+        }
+        .print-header h1 {
+            margin-top: 10px;
+            color: #417690;
+        }
+        .filter-info {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .status-present {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .status-absent {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .status-excused {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .status-late {
+            color: #fd7e14;
+            font-weight: bold;
+        }
+        @media print {
+            .no-print {
+                display: none;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="print-header">
+            <img src="{% static 'cricket_stats/images/logo.png' %}" alt="Ananda Cricket" onerror="this.style.display='none'">
+            <h1>{{ title }}</h1>
+        </div>
+
+        <div class="no-print mb-4">
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="bi bi-printer"></i> Print Report
+            </button>
+            <a href="{% url 'cricket_stats:attendance_report' %}" class="btn btn-secondary">
+                Back to Standard View
+            </a>
+        </div>
+
+        <div class="filter-info">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Date Range:</strong> 
+                        {% if start_date %}{{ start_date|date:"F j, Y" }}{% else %}All Time{% endif %}
+                        {% if end_date %} to {{ end_date|date:"F j, Y" }}{% endif %}
+                    </p>
+                    <p><strong>Age Group:</strong> {{ selected_age_group|default:"All Age Groups" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Player Class:</strong> {{ selected_player_class|default:"All Classes" }}</p>
+                    <p><strong>Report Generated:</strong> {% now "F j, Y H:i" %}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="attendance-section">
+            <div class="attendance-header">
+                <h4 class="mb-0">Attendance Summary</h4>
+            </div>
+            <div class="attendance-body">
+                <div class="table-responsive">
+                    <table class="table table-striped attendance-table">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Present</th>
+                                <th>Absent</th>
+                                <th>Excused</th>
+                                <th>Late</th>
+                                <th>Attendance Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player_id, player_data in report_data.items %}
+                                <tr>
+                                    <td>{{ player_data.name }}</td>
+                                    <td class="status-present">{{ player_data.present|default:"0" }}</td>
+                                    <td class="status-absent">{{ player_data.absent|default:"0" }}</td>
+                                    <td class="status-excused">{{ player_data.excused|default:"0" }}</td>
+                                    <td class="status-late">{{ player_data.late|default:"0" }}</td>
+                                    <td>
+                                        {% if player_data.attendance_rate %}
+                                            {{ player_data.attendance_rate|floatformat:1 }}%
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No attendance data found matching the current filters.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4 mb-4">
+            <p>Generated by Ananda Cricket Management System</p>
+            <p>{% now "F j, Y" %}</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-print when page loads
+        window.onload = function() {
+            // Delay printing to ensure page is fully loaded
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
+</body>
+</html>

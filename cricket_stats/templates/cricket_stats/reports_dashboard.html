@@ -1,0 +1,125 @@
+{% extends 'admin/base_site.html' %}
+{% load static %}
+
+{% block title %}Reports Dashboard | Ananda Cricket{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'cricket_stats/css/report_theme.css' %}">
+<style>
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .dashboard-title {
+        margin-bottom: 20px;
+    }
+    
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 20px;
+        flex-grow: 1;
+        height: calc(100vh - 150px);
+    }
+    
+    .dashboard-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .card-header {
+        flex-shrink: 0;
+    }
+    
+    .card-body {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .report-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--admin-primary);
+    }
+    
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+            grid-template-rows: repeat(4, 1fr);
+        }
+    }
+</style>
+{% endblock extrastyle %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h1 class="dashboard-title">Ananda Cricket Reports Dashboard</h1>
+    
+    <div class="dashboard-grid">
+        <div class="dashboard-card card">
+            <div class="card-header">
+                <h5 class="mb-0">Attendance Reports</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="report-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <p>View attendance reports for matches, practices, and other team events.</p>
+                <a href="{% url 'cricket_stats:attendance_report' %}" class="btn btn-report">View Report</a>
+            </div>
+        </div>
+        
+        <div class="dashboard-card card">
+            <div class="card-header">
+                <h5 class="mb-0">Audit Reports</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="report-icon">
+                    <i class="fas fa-history"></i>
+                </div>
+                <p>Track user activities and changes made to the system. See who added, modified, or deleted records.</p>
+                <a href="{% url 'cricket_stats:audit_report' %}" class="btn btn-report">View Report</a>
+            </div>
+        </div>
+        
+        <div class="dashboard-card card">
+            <div class="card-header">
+                <h5 class="mb-0">Match Scorecards</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="report-icon">
+                    <i class="fas fa-cricket"></i>
+                </div>
+                <p>View detailed match scorecards with batting, bowling, and fielding statistics.</p>
+                <a href="{% url 'cricket_stats:match_list' %}" class="btn btn-report">View Matches</a>
+            </div>
+        </div>
+        
+        <div class="dashboard-card card">
+            <div class="card-header">
+                <h5 class="mb-0">Player Profiles</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="report-icon">
+                    <i class="fas fa-user-alt"></i>
+                </div>
+                <p>View detailed player profiles with career statistics and performance metrics.</p>
+                <a href="{% url 'cricket_stats:player_list' %}" class="btn btn-report">View Players</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Font Awesome for icons -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+{% endblock %}

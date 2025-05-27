@@ -1,0 +1,220 @@
+{% extends 'cricket_stats/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}{% if form.instance.id %}Edit{% else %}Add{% endif %} Match{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5>{% if form.instance.id %}Edit{% else %}Add{% endif %} Match</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_name">Match Name (Optional)</label>
+                            {{ form.name|add_class:"form-control" }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_team_name">Team Name</label>
+                            {{ form.team_name|add_class:"form-control" }}
+                            {% if form.team_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.team_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_team">Team</label>
+                            {{ form.team|add_class:"form-control select2" }}
+                            {% if form.team.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.team.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_opponent">Opponent</label>
+                            {{ form.opponent|add_class:"form-control" }}
+                            {% if form.opponent.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.opponent.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_match_date">Match Date</label>
+                            {{ form.match_date|add_class:"form-control" }}
+                            {% if form.match_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.match_date.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        {% include 'cricket_stats/includes/searchable_dropdown.html' with 
+                            field=form.venue 
+                            field_id="id_venue" 
+                            placeholder="Select venue" 
+                            search_url=venue_search_url 
+                            add_url=add_dropdown_url 
+                            option_type="venue" 
+                        %}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_format">Match Format</label>
+                            {{ form.format|add_class:"form-control select2" }}
+                            {% if form.format.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.format.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_match_days">Match Days</label>
+                            {{ form.match_days|add_class:"form-control" }}
+                            {% if form.match_days.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.match_days.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_toss_winner">Toss Winner</label>
+                            {{ form.toss_winner|add_class:"form-control" }}
+                            {% if form.toss_winner.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.toss_winner.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_toss_decision">Toss Decision</label>
+                            {{ form.toss_decision|add_class:"form-control" }}
+                            {% if form.toss_decision.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.toss_decision.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {% include 'cricket_stats/includes/searchable_dropdown.html' with 
+                            field=form.result 
+                            field_id="id_result" 
+                            placeholder="Select match result" 
+                            search_url=match_result_search_url 
+                            add_url=add_dropdown_url 
+                            option_type="match_result" 
+                        %}
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_tournament">Tournament</label>
+                            {{ form.tournament|add_class:"form-control select2" }}
+                            {% if form.tournament.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.tournament.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_man_of_match">Man of the Match</label>
+                            {{ form.man_of_match|add_class:"form-control select2" }}
+                            {% if form.man_of_match.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.man_of_match.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a href="{% url 'cricket_stats:match_list' %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for all select elements
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+</script>
+{% endblock %}

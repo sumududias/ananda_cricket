@@ -1,0 +1,79 @@
+name: Django CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Fetch all history for proper versioning
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install flake8 coverage
+    
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    - name: Run Migrations
+      run: |
+        python manage.py migrate --settings=ananda_cricket.settings_test
+      
+    - name: Run Tests with Coverage
+      run: |
+        coverage run --source='.' manage.py test --settings=ananda_cricket.settings_test
+        coverage report
+    
+    - name: Generate Static Files
+      run: |
+        python manage.py collectstatic --noinput --settings=ananda_cricket.settings_test
+
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Deploy to PythonAnywhere
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.PYTHONANYWHERE_HOST }}
+        username: ${{ secrets.PYTHONANYWHERE_USERNAME }}
+        password: ${{ secrets.PYTHONANYWHERE_PASSWORD }}
+        port: 22
+        script: |
+          cd /home/anandacricket/ananda_cricket
+          git pull origin main
+          source /home/anandacricket/.virtualenvs/ananda_cricket_env/bin/activate
+          pip install -r requirements.txt
+          python manage.py migrate
+          python manage.py collectstatic --noinput
+          touch /var/www/anandacricket_pythonanywhere_com_wsgi.py

@@ -1,0 +1,177 @@
+{% extends 'cricket_stats/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}{% if form.instance.id %}Edit{% else %}Add{% endif %} Player{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5>{% if form.instance.id %}Edit{% else %}Add{% endif %} Player</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_first_name">First Name</label>
+                            {{ form.first_name|add_class:"form-control" }}
+                            {% if form.first_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.first_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_last_name">Last Name</label>
+                            {{ form.last_name|add_class:"form-control" }}
+                            {% if form.last_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.last_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_dob">Date of Birth</label>
+                            {{ form.dob|add_class:"form-control" }}
+                            {% if form.dob.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.dob.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_jersey_number">Jersey Number</label>
+                            {{ form.jersey_number|add_class:"form-control" }}
+                            {% if form.jersey_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.jersey_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {% include 'cricket_stats/includes/searchable_dropdown.html' with 
+                            field=form.batting_style 
+                            field_id="id_batting_style" 
+                            placeholder="Select batting style" 
+                            search_url=batting_style_search_url 
+                            add_url=add_dropdown_url 
+                            option_type="batting_style" 
+                        %}
+                    </div>
+                    <div class="col-md-6">
+                        {% include 'cricket_stats/includes/searchable_dropdown.html' with 
+                            field=form.bowling_style 
+                            field_id="id_bowling_style" 
+                            placeholder="Select bowling style" 
+                            search_url=bowling_style_search_url 
+                            add_url=add_dropdown_url 
+                            option_type="bowling_style" 
+                        %}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_primary_role">Primary Role</label>
+                            {{ form.primary_role|add_class:"form-control" }}
+                            {% if form.primary_role.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.primary_role.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        {% include 'cricket_stats/includes/searchable_dropdown.html' with 
+                            field=form.player_class 
+                            field_id="id_player_class" 
+                            placeholder="Select player class" 
+                            search_url=player_class_search_url 
+                            add_url=add_dropdown_url 
+                            option_type="player_class" 
+                        %}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_year_joined">Year Joined</label>
+                            {{ form.year_joined|add_class:"form-control" }}
+                            {% if form.year_joined.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.year_joined.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="id_is_active">Active Status</label>
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="id_is_active">
+                                    Is Active
+                                </label>
+                            </div>
+                            {% if form.is_active.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.is_active.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a href="{% url 'cricket_stats:player_list' %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for all select elements
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+</script>
+{% endblock %}

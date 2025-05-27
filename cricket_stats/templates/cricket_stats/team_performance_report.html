@@ -1,0 +1,299 @@
+{% load static %}
+
+{% block title %}{{ title }} - Ananda Cricket{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .performance-card {
+        margin-bottom: 20px;
+        border-radius: 8px;
+    }
+    .filter-section {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .performance-table {
+        width: 100%;
+    }
+    .performance-table th {
+        background-color: #417690;
+        color: white;
+    }
+    .print-btn {
+        margin-bottom: 15px;
+        background-color: #417690;
+        color: white;
+        border: none;
+    }
+    .print-btn:hover {
+        background-color: #205067;
+        color: white;
+    }
+    .stats-header {
+        background-color: #417690;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 4px 4px 0 0;
+    }
+    .stats-body {
+        background-color: #fff;
+        padding: 15px;
+        border: 1px solid #eee;
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+    }
+    .stats-section {
+        margin-bottom: 30px;
+    }
+    .win-percentage {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #417690;
+    }
+    .stat-card {
+        text-align: center;
+        padding: 15px;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        margin-bottom: 15px;
+    }
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #417690;
+    }
+    .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h2 mb-4">{{ title }}</h1>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="year" class="form-label">Year</label>
+                <select class="form-select" id="year" name="year">
+                    <option value="">All Years</option>
+                    {% for yr in years %}
+                    <option value="{{ yr }}" {% if yr|stringformat:"i" == selected_year %}selected{% endif %}>{{ yr }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="format" class="form-label">Match Format</label>
+                <select class="form-select" id="format" name="format">
+                    <option value="">All Formats</option>
+                    {% for fmt in formats %}
+                    <option value="{{ fmt.id }}" {% if fmt.id|stringformat:"i" == selected_format %}selected{% endif %}>{{ fmt.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <div>
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="{% url 'cricket_stats:team_performance_report' %}" class="btn btn-secondary">Reset Filters</a>
+                    <a href="{% url 'cricket_stats:team_performance_report' %}?{{ request.GET.urlencode }}&print=1" class="btn print-btn" target="_blank">
+                        <i class="bi bi-printer"></i> Print Report
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Match Statistics -->
+    <div class="stats-section">
+        <div class="stats-header">
+            <h4 class="mb-0">Match Statistics</h4>
+        </div>
+        <div class="stats-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="win-percentage">{{ match_stats.win_percentage|floatformat:1 }}%</div>
+                        <div class="stat-label">Win Percentage</div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div class="stat-value">{{ match_stats.total_matches }}</div>
+                                <div class="stat-label">Total Matches</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div class="stat-value">{{ match_stats.matches_won }}</div>
+                                <div class="stat-label">Matches Won</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div class="stat-value">{{ match_stats.matches_lost }}</div>
+                                <div class="stat-label">Matches Lost</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div class="stat-value">{{ match_stats.matches_drawn }}</div>
+                                <div class="stat-label">Matches Drawn</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div class="stat-value">{{ match_stats.matches_tied }}</div>
+                                <div class="stat-label">Matches Tied</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <div class="stat-value">{{ match_stats.matches_no_result }}</div>
+                                <div class="stat-label">No Result</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batting Statistics -->
+    <div class="stats-section">
+        <div class="stats-header">
+            <h4 class="mb-0">Batting Statistics</h4>
+        </div>
+        <div class="stats-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ batting_stats.total_runs|default:"0" }}</div>
+                        <div class="stat-label">Total Runs</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ batting_stats.strike_rate|floatformat:2 }}</div>
+                        <div class="stat-label">Strike Rate</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ batting_stats.total_centuries|default:"0" }}</div>
+                        <div class="stat-label">Centuries</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ batting_stats.total_fifties|default:"0" }}</div>
+                        <div class="stat-label">Half Centuries</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h5>Top Batsmen</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped performance-table">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Total Runs</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for batsman in top_batsmen %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'cricket_stats:player_profile' batsman.player__id %}">
+                                            {{ batsman.player__first_name }} {{ batsman.player__last_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ batsman.total_runs }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center">No batting data available.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bowling Statistics -->
+    <div class="stats-section">
+        <div class="stats-header">
+            <h4 class="mb-0">Bowling Statistics</h4>
+        </div>
+        <div class="stats-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ bowling_stats.total_wickets|default:"0" }}</div>
+                        <div class="stat-label">Total Wickets</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ bowling_stats.economy|floatformat:2 }}</div>
+                        <div class="stat-label">Economy Rate</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ bowling_stats.total_maidens|default:"0" }}</div>
+                        <div class="stat-label">Maiden Overs</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ bowling_stats.total_five_wickets|default:"0" }}</div>
+                        <div class="stat-label">5-Wicket Hauls</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h5>Top Bowlers</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped performance-table">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Total Wickets</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bowler in top_bowlers %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'cricket_stats:player_profile' bowler.player__id %}">
+                                            {{ bowler.player__first_name }} {{ bowler.player__last_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ bowler.total_wickets }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center">No bowling data available.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

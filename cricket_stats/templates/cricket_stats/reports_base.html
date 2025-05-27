@@ -1,0 +1,87 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{% block report_title %}Report{% endblock %} - Ananda Cricket{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+<link rel="stylesheet" href="{% static 'cricket_stats/css/report_theme.css' %}">
+<style>
+    /* Admin theme colors for reports */
+    :root {
+        --admin-primary: #417690;
+        --admin-primary-dark: #205067;
+        --admin-secondary: #79aec8;
+        --admin-accent: #f5dd5d;
+    }
+    
+    /* Card styles with admin colors */
+    .card-header {
+        background-color: var(--admin-primary) !important;
+        color: white !important;
+    }
+    
+    /* Button styles with admin colors */
+    .btn-primary {
+        background-color: var(--admin-primary) !important;
+        border-color: var(--admin-primary) !important;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--admin-primary-dark) !important;
+        border-color: var(--admin-primary-dark) !important;
+    }
+    
+    .btn-success {
+        background-color: #609060 !important;
+        border-color: #508050 !important;
+    }
+    
+    /* Table header with admin colors */
+    .table th {
+        background-color: var(--admin-primary) !important;
+        color: white !important;
+    }
+    
+    /* Filter section styling */
+    .filter-section {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    /* Fix for dark mode */
+    @media (prefers-color-scheme: dark) {
+        .filter-section {
+            background-color: #333;
+            border: 1px solid #444;
+        }
+        
+        .form-control, .form-select {
+            background-color: #444;
+            color: white;
+            border-color: #555;
+        }
+    }
+</style>
+{% block report_style %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="report-title">{% block report_heading %}Report{% endblock %}</h1>
+        {% block report_actions %}{% endblock %}
+    </div>
+    
+    {% block report_content %}{% endblock %}
+    
+    <div class="mt-4 mb-4">
+        <a href="{% url 'cricket_stats:reports_dashboard' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Reports
+        </a>
+    </div>
+</div>
+{% endblock %}

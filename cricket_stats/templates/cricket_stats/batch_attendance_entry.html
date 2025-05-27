@@ -1,0 +1,180 @@
+{% extends 'admin/base_site.html' %}
+{% load static %}
+{% load cricket_tags %}
+
+{% block title %}Record Attendance | Ananda Cricket{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'cricket_stats/css/report_theme.css' %}">
+<style>
+    .attendance-form {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .attendance-header {
+        background-color: var(--admin-primary);
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .attendance-header-content {
+        flex-grow: 1;
+    }
+    
+    .attendance-actions {
+        flex-shrink: 0;
+    }
+    
+    .attendance-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .attendance-table th {
+        background-color: var(--admin-primary);
+        color: white;
+        padding: 12px;
+        text-align: left;
+    }
+    
+    .attendance-table td {
+        padding: 12px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .attendance-table tr:nth-child(even) {
+        background-color: rgba(0, 0, 0, 0.03);
+    }
+    
+    .attendance-table tr:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .status-select {
+        width: 100%;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #ced4da;
+        /* Fix for dropdown alignment */
+        text-align: center;
+        text-align-last: center;
+        height: 40px; /* Increase height to show full text */
+        appearance: menulist; /* Use native dropdown appearance */
+    }
+    
+    /* Fix for dropdown options alignment */
+    .status-select option {
+        text-align: center;
+    }
+    
+    .submit-row {
+        margin-top: 20px;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        .attendance-table td {
+            color: #e0e0e0;
+        }
+        
+        .attendance-table tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .attendance-table tr:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .status-select {
+            background-color: #333;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="attendance-form">
+        <div class="attendance-header">
+            <div class="attendance-header-content">
+                <h1>Record Attendance</h1>
+                <p class="mb-0">{{ training_session.get_session_type_display }} - {{ training_session.date|date:"D, d M Y" }} ({{ training_session.start_time|time:"g:i A" }} - {{ training_session.end_time|time:"g:i A" }})</p>
+            </div>
+            <div class="attendance-actions">
+                <a href="{% url 'cricket_stats:batch_attendance_entry' training_session.id %}?print=true" class="btn btn-success" target="_blank">
+                    <i class="bi bi-printer"></i> Print Attendance Sheet
+                </a>
+            </div>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <table class="attendance-table">
+                <thead>
+                    <tr>
+                        <th width="5%">#</th>
+                        <th width="30%">Player</th>
+                        <th width="20%">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player in active_players %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                {{ player.name }}
+                                <input type="hidden" name="player_{{ player.id }}" value="{{ player.id }}">
+                            </td>
+                            <td>
+                                <select name="status_{{ player.id }}" class="status-select">
+                                    {% for status_code, status_name in attendance_choices %}
+                                        <option value="{{ status_code }}" {% if player.id in existing_attendance and existing_attendance|get_item:player.id == status_code %}selected{% endif %}>
+                                            {{ status_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <div class="submit-row">
+                <a href="{% url 'cricket_stats:training_session_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Sessions
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Save Attendance
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add JavaScript to make the print button work correctly -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the print button
+        const printButton = document.querySelector('.attendance-actions a');
+        
+        // Add click event listener
+        printButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Open the print URL in a new tab
+            window.open(this.href, '_blank');
+        });
+    });
+</script>
+{% endblock %}

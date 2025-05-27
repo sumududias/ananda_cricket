@@ -1,0 +1,474 @@
+{% extends 'cricket_stats/reports_base.html' %}
+{% load static %}
+{% load cricket_tags %}
+
+{% block report_title %}Match Scorecard{% endblock %}
+{% block report_heading %}{{ match.team_name }} vs {{ match.opponent }}{% endblock %}
+
+{% block report_style %}
+<style>
+    .scorecard-section {
+        margin-bottom: 30px;
+    }
+    .scorecard-header {
+        background-color: var(--admin-primary);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px 8px 0 0;
+        font-weight: 600;
+    }
+    .scorecard-body {
+        background-color: #fff;
+        padding: 20px;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .match-info {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .team-name {
+        font-weight: 600;
+        color: var(--admin-primary);
+    }
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    .table thead th {
+        border-bottom: 2px solid #dee2e6;
+    }
+    .table tbody tr:hover {
+        background-color: rgba(65, 118, 144, 0.05);
+    }
+    
+    @media print {
+        .scorecard-header {
+            background-color: #f8f9fa !important;
+            color: #212529 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .batting-table th, .bowling-table th {
+            background-color: #f8f9fa !important;
+            color: #212529 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+    
+    /* Dark mode fixes */
+    @media (prefers-color-scheme: dark) {
+        .match-info {
+            background-color: #333;
+            border: 1px solid #444;
+        }
+    }
+    
+    /* Fix for CSS loading delay */
+    body {
+        visibility: hidden;
+    }
+    .js-loaded {
+        visibility: visible;
+    }
+</style>
+{% endblock %}
+
+{% block report_actions %}
+<a href="{% url 'cricket_stats:match_scorecard' match.id %}?print=true" class="btn btn-primary me-2" target="_blank">
+    <i class="bi bi-printer"></i> Print Scorecard
+</a>
+<a href="{% url 'cricket_stats:match_list' %}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Back to Matches
+</a>
+{% endblock %}
+
+{% block report_content %}
+<div class="match-info">
+    <div class="row">
+        <div class="col-md-6">
+            <p><strong>Date:</strong> {{ match.match_date }}</p>
+            <p><strong>Venue:</strong> {{ match.venue }}</p>
+            <p><strong>Format:</strong> {{ match.format }}</p>
+        </div>
+        <div class="col-md-6">
+            <p><strong>Opponent:</strong> <span class="team-name">{{ match.opponent }}</span></p>
+            <p><strong>Result:</strong> {{ match.result }}</p>
+            <p><strong>Toss:</strong> {{ match.toss_winner }} chose to {{ match.toss_decision }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- First Innings Batting Section -->
+<div class="scorecard-section">
+    <div class="scorecard-header">
+        <h4 class="mb-0">Ananda College 1st Innings Batting</h4>
+    </div>
+    <div class="scorecard-body">
+        <div class="table-responsive">
+            <table class="table table-striped batting-table">
+                <thead>
+                    <tr>
+                        <th>Batsman</th>
+                        <th>Dismissal</th>
+                        <th>Runs</th>
+                        <th>Balls</th>
+                        <th>4s</th>
+                        <th>6s</th>
+                        <th>SR</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for batsman in first_innings_batting %}
+                    <tr>
+                        <td>{{ batsman.player.name }}</td>
+                        <td>{{ batsman.how_out }}</td>
+                        <td>{{ batsman.runs_scored }}</td>
+                        <td>{{ batsman.balls_faced }}</td>
+                        <td>{{ batsman.fours }}</td>
+                        <td>{{ batsman.sixes }}</td>
+                        <td>
+                            {% if batsman.balls_faced > 0 %}
+                                {% widthratio batsman.runs_scored batsman.balls_faced 100 %}
+                            {% else %}
+                                0.00
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center">No batting data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2"><strong>Total</strong></td>
+                        <td><strong>{{ first_innings_total.runs }}</strong></td>
+                        <td colspan="3"></td>
+                        <td>
+                            <strong>
+                                {{ first_innings_total.wickets }} wickets
+                            </strong>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- First Innings Bowling Section -->
+<div class="scorecard-section">
+    <div class="scorecard-header">
+        <h4 class="mb-0">1st Innings Bowling</h4>
+    </div>
+    <div class="scorecard-body">
+        <div class="table-responsive">
+            <table class="table table-striped bowling-table">
+                <thead>
+                    <tr>
+                        <th>Bowler</th>
+                        <th>Overs</th>
+                        <th>Maidens</th>
+                        <th>Runs</th>
+                        <th>Wickets</th>
+                        <th>Economy</th>
+                        <th>Wides</th>
+                        <th>No Balls</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bowler in first_innings_bowling %}
+                    <tr>
+                        <td>{{ bowler.player.name }}</td>
+                        <td>{{ bowler.overs_bowled }}</td>
+                        <td>{{ bowler.maidens_bowled }}</td>
+                        <td>{{ bowler.runs_conceded }}</td>
+                        <td>{{ bowler.wickets_taken }}</td>
+                        <td>
+                            {% if bowler.overs_bowled > 0 %}
+                                {% widthratio bowler.runs_conceded bowler.overs_bowled 1 %}
+                            {% else %}
+                                0.00
+                            {% endif %}
+                        </td>
+                        <td>{{ bowler.wides|default:"0" }}</td>
+                        <td>{{ bowler.no_balls|default:"0" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">No bowling data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if is_multi_day_match %}
+<!-- Second Innings Batting Section -->
+<div class="scorecard-section">
+    <div class="scorecard-header">
+        <h4 class="mb-0">Ananda College 2nd Innings Batting</h4>
+    </div>
+    <div class="scorecard-body">
+        <div class="table-responsive">
+            <table class="table table-striped batting-table">
+                <thead>
+                    <tr>
+                        <th>Batsman</th>
+                        <th>Dismissal</th>
+                        <th>Runs</th>
+                        <th>Balls</th>
+                        <th>4s</th>
+                        <th>6s</th>
+                        <th>SR</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for batsman in second_innings_batting %}
+                    <tr>
+                        <td>{{ batsman.player.name }}</td>
+                        <td>{{ batsman.how_out }}</td>
+                        <td>{{ batsman.runs_scored }}</td>
+                        <td>{{ batsman.balls_faced }}</td>
+                        <td>{{ batsman.fours }}</td>
+                        <td>{{ batsman.sixes }}</td>
+                        <td>
+                            {% if batsman.balls_faced > 0 %}
+                                {% widthratio batsman.runs_scored batsman.balls_faced 100 %}
+                            {% else %}
+                                0.00
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center">No batting data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2"><strong>Total</strong></td>
+                        <td><strong>{{ second_innings_total.runs }}</strong></td>
+                        <td colspan="3"></td>
+                        <td>
+                            <strong>
+                                {{ second_innings_total.wickets }} wickets
+                            </strong>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Second Innings Bowling Section -->
+<div class="scorecard-section">
+    <div class="scorecard-header">
+        <h4 class="mb-0">2nd Innings Bowling</h4>
+    </div>
+    <div class="scorecard-body">
+        <div class="table-responsive">
+            <table class="table table-striped bowling-table">
+                <thead>
+                    <tr>
+                        <th>Bowler</th>
+                        <th>Overs</th>
+                        <th>Maidens</th>
+                        <th>Runs</th>
+                        <th>Wickets</th>
+                        <th>Economy</th>
+                        <th>Wides</th>
+                        <th>No Balls</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bowler in second_innings_bowling %}
+                    <tr>
+                        <td>{{ bowler.player.name }}</td>
+                        <td>{{ bowler.overs_bowled }}</td>
+                        <td>{{ bowler.maidens_bowled }}</td>
+                        <td>{{ bowler.runs_conceded }}</td>
+                        <td>{{ bowler.wickets_taken }}</td>
+                        <td>
+                            {% if bowler.overs_bowled > 0 %}
+                                {% widthratio bowler.runs_conceded bowler.overs_bowled 1 %}
+                            {% else %}
+                                0.00
+                            {% endif %}
+                        </td>
+                        <td>{{ bowler.wides|default:"0" }}</td>
+                        <td>{{ bowler.no_balls|default:"0" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">No bowling data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Match Summary Section -->
+<div class="scorecard-section">
+    <div class="scorecard-header">
+        <h4 class="mb-0">Match Summary</h4>
+    </div>
+    <div class="scorecard-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Ananda College</h5>
+                <p><strong>Score:</strong> {{ first_innings_total.runs }}/{{ first_innings_total.wickets }} wickets</p>
+                {% if is_multi_day_match %}
+                    <p><strong>2nd Innings:</strong> {{ second_innings_total.runs }}/{{ second_innings_total.wickets }} wickets</p>
+                {% endif %}
+                
+                <!-- Top Performers Section -->
+                <h5 class="mt-4">Top Performers</h5>
+                
+                <!-- Top Scorers -->
+                <h6 class="mt-3">Top Scorers</h6>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Runs</th>
+                            <th>Balls</th>
+                            <th>SR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for batsman in top_scorers %}
+                        <tr>
+                            <td>{{ batsman.player.name }}</td>
+                            <td><strong>{{ batsman.runs_scored }}</strong></td>
+                            <td>{{ batsman.balls_faced }}</td>
+                            <td>{% if batsman.balls_faced > 0 %}{{ batsman.strike_rate|floatformat:2 }}{% else %}0.00{% endif %}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">No batting data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <!-- Top Wicket Takers -->
+                <h6 class="mt-3">Top Wicket Takers</h6>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Wickets</th>
+                            <th>Overs</th>
+                            <th>Runs</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bowler in top_wicket_takers %}
+                        <tr>
+                            <td>{{ bowler.player.name }}</td>
+                            <td><strong>{{ bowler.wickets_taken }}</strong></td>
+                            <td>{{ bowler.overs_bowled }}</td>
+                            <td>{{ bowler.runs_conceded }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">No bowling data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <!-- Extras Summary -->
+                <h6 class="mt-3">Extras</h6>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Wides</td>
+                            <td>{{ first_innings_bowling|sum_attr:"wides" }}</td>
+                        </tr>
+                        <tr>
+                            <td>No Balls</td>
+                            <td>{{ first_innings_bowling|sum_attr:"no_balls" }}</td>
+                        </tr>
+                        <tr>
+                            <td>Byes</td>
+                            <td>{{ match.ananda_extras_byes|default:"0" }}</td>
+                        </tr>
+                        <tr>
+                            <td>Leg Byes</td>
+                            <td>{{ match.ananda_extras_leg_byes|default:"0" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Extras</strong></td>
+                            <td><strong>
+                                {% with wides=first_innings_bowling|sum_attr:"wides" no_balls=first_innings_bowling|sum_attr:"no_balls" %}
+                                    {{ wides|add:no_balls|add:match.ananda_extras_byes|default:0|add:match.ananda_extras_leg_byes|default:0 }}
+                                {% endwith %}
+                            </strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <hr>
+        <h5>Fielding Highlights</h5>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Catches</th>
+                        <th>Stumpings</th>
+                        <th>Run Outs</th>
+                        <th>Total Dismissals</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fielder in fielding_highlights %}
+                    <tr>
+                        <td>{{ fielder.player.name }}</td>
+                        <td>{{ fielder.catches }}</td>
+                        <td>{{ fielder.stumpings }}</td>
+                        <td>{{ fielder.run_outs }}</td>
+                        <td>{{ fielder.total_dismissals }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No fielding data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// Fix for CSS loading delay
+document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('js-loaded');
+});
+</script>
+{% endblock %}

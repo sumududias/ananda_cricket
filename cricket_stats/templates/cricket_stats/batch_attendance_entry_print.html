@@ -1,0 +1,87 @@
+{% extends "cricket_stats/print_base.html" %}
+{% load static %}
+{% load cricket_tags %}
+
+{% block title %}Attendance Sheet - {{ training_session }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1>Attendance Sheet</h1>
+            <h3>{{ training_session.get_session_type_display }} - {{ training_session.date|date:"D, d M Y" }}</h3>
+            <p>{{ training_session.start_time|time:"g:i A" }} - {{ training_session.end_time|time:"g:i A" }}</p>
+            {% if training_session.notes %}
+                <p><strong>Notes:</strong> {{ training_session.notes }}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th width="5%">#</th>
+                        <th width="30%">Player Name</th>
+                        <th width="15%">Status</th>
+                        <th width="50%">Signature</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player in active_players %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ player.name }}</td>
+                            <td>
+                                {% if player.id in existing_attendance %}
+                                    {% for code, label in attendance_choices %}
+                                        {% if existing_attendance|get_item:player.id == code %}
+                                            {{ label }}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-6">
+            <p><strong>Coach Signature:</strong> _______________________</p>
+        </div>
+        <div class="col-6 text-end">
+            <p><strong>Date:</strong> _______________________</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    @media print {
+        body {
+            font-size: 12pt;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th, .table td {
+            border: 1px solid #000;
+            padding: 8px;
+        }
+        
+        .table th {
+            background-color: #f2f2f2 !important;
+            -webkit-print-color-adjust: exact;
+        }
+    }
+</style>
+{% endblock %}

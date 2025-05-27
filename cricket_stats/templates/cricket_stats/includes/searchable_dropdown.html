@@ -1,0 +1,134 @@
+{% comment %}
+    This template is used to create a searchable dropdown with the ability to add new options.
+    
+    Parameters:
+    - field: The form field to render
+    - field_id: The ID for the field (optional, defaults to id_{{field.name}})
+    - placeholder: Placeholder text for the dropdown
+    - search_url: URL for AJAX search
+    - add_url: URL for adding new options
+    - option_type: Type of option being added (e.g., 'bowling_style')
+{% endcomment %}
+
+{% load widget_tweaks %}
+
+<div class="form-group searchable-dropdown-container">
+    <label for="{{ field_id|default:'id_'|add:field.name }}">{{ field.label }}</label>
+    <div class="input-group">
+        {{ field|add_class:"form-control select2-searchable" }}
+        <div class="input-group-append">
+            <button type="button" class="btn btn-outline-secondary add-new-option" 
+                    data-option-type="{{ option_type }}" 
+                    data-toggle="modal" 
+                    data-target="#addOptionModal{{ field.name }}">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </div>
+    {% if field.errors %}
+        <div class="invalid-feedback d-block">
+            {% for error in field.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% if field.help_text %}
+        <small class="form-text text-muted">{{ field.help_text }}</small>
+    {% endif %}
+</div>
+
+<!-- Modal for adding new option -->
+<div class="modal fade" id="addOptionModal{{ field.name }}" tabindex="-1" role="dialog" aria-labelledby="addOptionModalLabel{{ field.name }}" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addOptionModalLabel{{ field.name }}">Add New {{ field.label }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addOptionForm{{ field.name }}" class="add-option-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="option_type" value="{{ option_type }}">
+                    <div class="form-group">
+                        <label for="value{{ field.name }}">Value</label>
+                        <input type="text" class="form-control" id="value{{ field.name }}" name="value" required>
+                        <small class="form-text text-muted">Short code used as the actual value (e.g. "RHB")</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="display{{ field.name }}">Display Text</label>
+                        <input type="text" class="form-control" id="display{{ field.name }}" name="display" required>
+                        <small class="form-text text-muted">Text shown to users (e.g. "Right Hand Batsman")</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary submit-option" data-form="addOptionForm{{ field.name }}" data-field="{{ field.name }}">Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for this field
+        $("#{{ field_id|default:'id_'|add:field.name }}").select2({
+            placeholder: "{{ placeholder|default:'Select an option' }}",
+            allowClear: true,
+            ajax: {
+                url: "{{ search_url }}",
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term || '',
+                        page: params.page || 1
+                    };
+                },
+                processResults: function(data, params) {
+                    return {
+                        results: data.results,
+                        pagination: {
+                            more: false
+                        }
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 0
+        });
+        
+        // Handle form submission for adding new option
+        $(".submit-option[data-form='addOptionForm{{ field.name }}']").click(function() {
+            var form = $("#addOptionForm{{ field.name }}");
+            var formData = form.serialize();
+            
+            $.ajax({
+                url: "{{ add_url }}",
+                type: "POST",
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        // Create the new option
+                        var newOption = new Option(response.text, response.id, true, true);
+                        $("#{{ field_id|default:'id_'|add:field.name }}").append(newOption).trigger('change');
+                        
+                        // Close the modal and reset the form
+                        $("#addOptionModal{{ field.name }}").modal('hide');
+                        form[0].reset();
+                        
+                        // Show success message
+                        toastr.success(response.message);
+                    } else {
+                        toastr.error(response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    toastr.error("An error occurred. Please try again.");
+                }
+            });
+        });
+    });
+</script>

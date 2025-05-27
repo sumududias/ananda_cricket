@@ -1,0 +1,99 @@
+{% extends 'cricket_stats/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ match.name|default:match.opponent }} - Match Summary</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Match Details</h5>
+                <a href="{{ request.path }}?print=1" target="_blank" class="btn btn-sm btn-light">
+                    <i class="fas fa-print"></i> Print Summary
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Date:</strong> {{ match.match_date }}</p>
+                    <p><strong>Venue:</strong> {{ match.venue }}</p>
+                    <p><strong>Format:</strong> {{ match.format.name|default:"Unknown" }}</p>
+                    <p><strong>Teams:</strong> {{ match.team_name|default:match.college_name }} vs {{ match.opponent }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Toss:</strong> {{ match.toss_winner }} won and elected to {{ match.toss_decision }}</p>
+                    <p><strong>Result:</strong> {{ match.result }}</p>
+                    <p><strong>Man of the Match:</strong> {{ match.man_of_match|default:"Not awarded" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Match Scorecard</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Team</th>
+                            <th>1st Innings</th>
+                            <th>2nd Innings</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>{{ match.team_name|default:match.college_name }}</strong></td>
+                            <td>{{ first_innings_total }}</td>
+                            <td>{{ second_innings_total|default:"--" }}</td>
+                            <td>{{ first_innings_total|add:second_innings_total }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>{{ match.opponent }}</strong></td>
+                            <td>{{ opponent_first_innings }}</td>
+                            <td>{{ opponent_second_innings|default:"--" }}</td>
+                            <td>{{ opponent_first_innings|add:opponent_second_innings }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Notable Performances</h5>
+        </div>
+        <div class="card-body">
+            {% if notable_performances %}
+                <div class="row">
+                    {% for performance in notable_performances %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <strong>{{ performance.type }}</strong>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">{{ performance.player.first_name }} {{ performance.player.last_name }}</h5>
+                                <p class="card-text">{{ performance.performance }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-center">No notable performances recorded for this match.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="d-flex justify-content-between mb-4">
+        <a href="{% url 'cricket_stats:match_first_innings' match.id %}" class="btn btn-primary">First Innings</a>
+        <a href="{% url 'cricket_stats:match_second_innings' match.id %}" class="btn btn-success">Second Innings</a>
+    </div>
+</div>
+{% endblock %}
